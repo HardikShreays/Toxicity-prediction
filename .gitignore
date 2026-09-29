@@ -1,0 +1,30 @@
+# data - raw download + regenerated caches
+data/raw/
+data/**/*.parquet
+data/**/*.npy
+data/**/*.pt
+
+# model checkpoints
+*.pt
+
+# python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+.ipynb_checkpoints/
+
+# os / editor
+.DS_Store
+.vscode/
+
+# the plan pdf stays local
+*.pdf
+
+# latex build junk
+report/**/*.aux
+report/**/*.log
+report/**/*.out
+report/**/*.bbl
+report/**/*.blg
+report/**/*.synctex.gz
