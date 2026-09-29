@@ -25,9 +25,10 @@ RUNS = ([("scaffold_det", s) for s in SEEDS]
 
 def build_X(feats, fp, desc, idx):
     """Feature matrices for train/val/test. Descriptor preprocessing is fit on train rows only."""
-    X = {k: fp[v].astype(np.float32) for k, v in idx.items()}
-    names = [f"bit{i}" for i in range(fp.shape[1])]
-    if feats == "fpdesc":
+    X = {k: fp[v].astype(np.float32) if "fp" in feats else np.empty((len(v), 0), np.float32)
+         for k, v in idx.items()}
+    names = [f"bit{i}" for i in range(fp.shape[1])] if "fp" in feats else []
+    if "desc" in feats:
         pipe = desc_pipeline().fit(desc[idx["train"]])
         for k, v in idx.items():
             X[k] = np.hstack([X[k], pipe.transform(desc[v]).astype(np.float32)])
@@ -61,8 +62,10 @@ def fit_task(algo, X, y, seed):
     return model, info
 
 
-def run(model_name, split, seed, df, fp, desc, log):
+def run(model_name, split, seed, df, fp, desc, log, out=PREDS):
+    """model_name = {algo}_{feats}[-suffix], feats in fp / fpdesc / desc. Ablations pass a suffix + out dir."""
     algo, feats = model_name.split("_")
+    feats = feats.split("-")[0]
     s = load(split)
     pos = pd.Series(range(len(df)), index=df.smiles)
     idx = {k: pos[s[k]].to_numpy() for k in ("train", "val", "test")}
@@ -81,11 +84,11 @@ def run(model_name, split, seed, df, fp, desc, log):
             gain = model.get_booster().get_score(importance_type="gain")
             importance += [{"task": t, "feature": names[int(f[1:])], "gain": g} for f, g in gain.items()]
 
-    out = pd.concat([pd.DataFrame({"smiles": s[k], "role": k, **dict(zip(TASKS, probs[k].T))})
-                     for k in ("val", "test")], ignore_index=True)
-    out.to_parquet(PREDS / f"{model_name}__{split}__seed{seed}.parquet", index=False)
+    preds = pd.concat([pd.DataFrame({"smiles": s[k], "role": k, **dict(zip(TASKS, probs[k].T))})
+                       for k in ("val", "test")], ignore_index=True)
+    preds.to_parquet(out / f"{model_name}__{split}__seed{seed}.parquet", index=False)
     log.setdefault(model_name, {})[f"{split}__seed{seed}"] = run_log
-    if algo == "xgb" and split == "scaffold_det" and seed == 0:
+    if algo == "xgb" and split == "scaffold_det" and seed == 0 and out == PREDS:
         AML_IMPORTANCE.mkdir(parents=True, exist_ok=True)
         (pd.DataFrame(importance).sort_values(["task", "gain"], ascending=[True, False])
          .to_csv(AML_IMPORTANCE / f"{model_name}__scaffold_det.csv", index=False))
