@@ -8,7 +8,10 @@ import re
 
 import pandas as pd
 
-from tox.constants import HEADLINE, METRICS, SUMMARY
+from tox.constants import HEADLINE, METRICS, ROOT, SUMMARY
+
+README = ROOT / "README.md"
+MARK = ("<!-- results:start -->", "<!-- results:end -->")
 
 
 def load_all():
@@ -28,7 +31,7 @@ def main():
                       roc_auc_mean=("roc_auc", "mean"), roc_auc_std=("roc_auc", "std"),
                       pr_auc_mean=("pr_auc", "mean"), pr_auc_std=("pr_auc", "std"))
                  .reset_index())
-    summary.round(4).to_csv(SUMMARY, index=False)
+    summary.to_csv(SUMMARY, index=False)             # full precision, round only when displaying
 
     per_run = df.groupby(["model", "split", "seed"], sort=False)[["roc_auc", "pr_auc", "pos_rate"]].mean()
     headline = (per_run.groupby(["model", "split"], sort=False)
@@ -36,8 +39,24 @@ def main():
                             pr_auc_mean=("pr_auc", "mean"), pr_auc_std=("pr_auc", "std"),
                             pos_rate=("pos_rate", "mean"))
                        .reset_index())
-    headline.round(4).to_csv(HEADLINE, index=False)
+    headline.to_csv(HEADLINE, index=False)
     print(headline.round(3).to_string(index=False))
+    fill_readme(headline)
+
+
+def fill_readme(headline):
+    """Rewrite the results table in README.md between the markers, so it never goes stale."""
+    cols = ["scaffold_det", "scaffold", "random"]
+    lines = ["| model | " + " | ".join(f"ROC {c}" for c in cols) + " | " + " | ".join(f"PR {c}" for c in cols) + " |",
+             "|---" * 7 + "|"]
+    for m, g in headline.groupby("model", sort=False):
+        g = g.set_index("split")
+        cell = lambda c, k: f"{g.loc[c, k + '_mean']:.3f} ± {g.loc[c, k + '_std']:.3f}"
+        lines.append(f"| {m} | " + " | ".join(cell(c, "roc_auc") for c in cols) + " | "
+                     + " | ".join(cell(c, "pr_auc") for c in cols) + " |")
+    text = README.read_text()
+    a, b = text.index(MARK[0]) + len(MARK[0]), text.index(MARK[1])
+    README.write_text(text[:a] + "\n" + "\n".join(lines) + "\n" + text[b:])
 
 
 if __name__ == "__main__":
