@@ -1,0 +1,15 @@
+\section{Related Work}
+
+\textbf{MoleculeNet}~\cite{wu2018moleculenet} standardised molecular property benchmarks, including Tox21, and its DeepChem implementation of the scaffold splitter is the convention our \texttt{scaffold\_det} follows. For Tox21 itself MoleculeNet reported results on a \emph{random} split (test ROC-AUC roughly 0.70--0.83 from logistic regression up to graph convolutions), so those numbers are comparable to our \texttt{random} rows, not our scaffold rows.
+
+\textbf{Neural message passing}~\cite{gilmer2017mpnn} unified graph neural networks for chemistry into one framework: atoms exchange messages along bonds for several rounds, then a readout function pools atom states into a molecule vector. It is the framework our Phase~2 GNNs instantiate, and the natural alternative to fixed fingerprints.
+
+\textbf{Extended-connectivity fingerprints}~\cite{rogers2010ecfp} (ECFP, Morgan fingerprints in RDKit) encode each atom's circular neighbourhood up to a radius as an integer identifier, then hash the identifiers into a fixed-length bit vector. A set bit means ``at least one of the substructures hashed to this position is present'', which is why bit collisions matter when interpreting feature importances. Radius 2 (ECFP4) is the common default.
+
+\textbf{XGBoost}~\cite{chen2016xgboost} fits an additive ensemble of regression trees by second-order gradient boosting with shrinkage, row/column subsampling and explicit regularisation of leaf weights. Its \texttt{scale\_pos\_weight} parameter and early stopping on a held-out metric are the two mechanisms we rely on for imbalanced endpoints.
+
+\textbf{AttentiveFP}~\cite{xiong2020attentivefp} adds graph attention both between neighbouring atoms and in the molecule-level readout, and reported state-of-the-art results on several MoleculeNet tasks including Tox21. It is the strongest graph architecture planned for Phase~2.
+
+\textbf{Yang et al.}~\cite{yang2019analyzing} compared learned representations (their directed MPNN) against fingerprint baselines across many datasets and split types. They found that well-tuned fingerprint models are often competitive, and that the gap between random and scaffold splits is large for all models. This is the honest framing for our project: the question is not only whether a GNN wins on average but whether it generalises better to unseen scaffolds.
+
+\textbf{DeepTox}~\cite{mayr2016deeptox}, the Tox21 challenge winner, used multi-task deep networks on large sets of descriptors and showed that sharing information across related endpoints helps. Our EDA finds the same structure (NR-AR/NR-AR-LBD and NR-ER/NR-ER-LBD are strongly correlated), which motivates the multi-task GNNs in Phase~2.
