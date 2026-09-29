@@ -1,0 +1,11 @@
+# pinned, tested on python 3.11 (macOS arm64 + colab)
+rdkit==2026.3.6
+pandas==3.0.6
+pyarrow==25.0.1
+numpy==2.4.6
+scikit-learn==1.9.1
+xgboost==3.2.0
+scipy==1.17.1
+matplotlib==3.11.2
+pyyaml==6.0.3
+pytest==9.1.1
