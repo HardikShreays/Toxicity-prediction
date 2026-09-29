@@ -1,0 +1,15 @@
+# A2 - small grids, tuned per endpoint on val PR-AUC
+fp_radius: 2
+fp_size: 2048
+lr:
+  C: [0.01, 0.1, 1.0]
+rf:
+  n_estimators: 500
+  min_samples_leaf: [1, 3]
+xgb:
+  n_estimators: 1000
+  learning_rate: 0.05
+  max_depth: [4, 6]
+  subsample: 0.8
+  colsample_bytree: 0.5
+  early_stopping_rounds: 50
