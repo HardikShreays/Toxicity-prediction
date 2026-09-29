@@ -1,0 +1,2074 @@
+{
+ "xgb_fp-r1-1024": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4674,
+    "val_has_both_classes": true,
+    "best_iteration": 20
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5081,
+    "val_has_both_classes": true,
+    "best_iteration": 12
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5203,
+    "val_has_both_classes": true,
+    "best_iteration": 73
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3471,
+    "val_has_both_classes": true,
+    "best_iteration": 20
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3419,
+    "val_has_both_classes": true,
+    "best_iteration": 26
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3592,
+    "val_has_both_classes": true,
+    "best_iteration": 335
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1046,
+    "val_has_both_classes": true,
+    "best_iteration": 52
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4055,
+    "val_has_both_classes": true,
+    "best_iteration": 216
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.2215,
+    "val_has_both_classes": true,
+    "best_iteration": 158
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.402,
+    "val_has_both_classes": true,
+    "best_iteration": 5
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5325,
+    "val_has_both_classes": true,
+    "best_iteration": 197
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3812,
+    "val_has_both_classes": true,
+    "best_iteration": 316
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4745,
+    "val_has_both_classes": true,
+    "best_iteration": 6
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5371,
+    "val_has_both_classes": true,
+    "best_iteration": 83
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5288,
+    "val_has_both_classes": true,
+    "best_iteration": 142
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3761,
+    "val_has_both_classes": true,
+    "best_iteration": 178
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3242,
+    "val_has_both_classes": true,
+    "best_iteration": 168
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.356,
+    "val_has_both_classes": true,
+    "best_iteration": 414
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1294,
+    "val_has_both_classes": true,
+    "best_iteration": 4
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4556,
+    "val_has_both_classes": true,
+    "best_iteration": 327
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.2253,
+    "val_has_both_classes": true,
+    "best_iteration": 118
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.2953,
+    "val_has_both_classes": true,
+    "best_iteration": 147
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5326,
+    "val_has_both_classes": true,
+    "best_iteration": 171
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3419,
+    "val_has_both_classes": true,
+    "best_iteration": 24
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4725,
+    "val_has_both_classes": true,
+    "best_iteration": 16
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.503,
+    "val_has_both_classes": true,
+    "best_iteration": 16
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5317,
+    "val_has_both_classes": true,
+    "best_iteration": 133
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.36,
+    "val_has_both_classes": true,
+    "best_iteration": 81
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3202,
+    "val_has_both_classes": true,
+    "best_iteration": 7
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3506,
+    "val_has_both_classes": true,
+    "best_iteration": 7
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1172,
+    "val_has_both_classes": true,
+    "best_iteration": 2
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4274,
+    "val_has_both_classes": true,
+    "best_iteration": 198
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1771,
+    "val_has_both_classes": true,
+    "best_iteration": 131
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.2991,
+    "val_has_both_classes": true,
+    "best_iteration": 124
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5317,
+    "val_has_both_classes": true,
+    "best_iteration": 116
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3464,
+    "val_has_both_classes": true,
+    "best_iteration": 127
+   }
+  }
+ },
+ "xgb_fp-r1-2048": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4586,
+    "val_has_both_classes": true,
+    "best_iteration": 13
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4948,
+    "val_has_both_classes": true,
+    "best_iteration": 216
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5382,
+    "val_has_both_classes": true,
+    "best_iteration": 116
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3555,
+    "val_has_both_classes": true,
+    "best_iteration": 88
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3184,
+    "val_has_both_classes": true,
+    "best_iteration": 21
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.376,
+    "val_has_both_classes": true,
+    "best_iteration": 337
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1107,
+    "val_has_both_classes": true,
+    "best_iteration": 2
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4188,
+    "val_has_both_classes": true,
+    "best_iteration": 253
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1928,
+    "val_has_both_classes": true,
+    "best_iteration": 226
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.2823,
+    "val_has_both_classes": true,
+    "best_iteration": 6
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5523,
+    "val_has_both_classes": true,
+    "best_iteration": 162
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3283,
+    "val_has_both_classes": true,
+    "best_iteration": 20
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4883,
+    "val_has_both_classes": true,
+    "best_iteration": 2
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5108,
+    "val_has_both_classes": true,
+    "best_iteration": 2
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5352,
+    "val_has_both_classes": true,
+    "best_iteration": 48
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3562,
+    "val_has_both_classes": true,
+    "best_iteration": 106
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.329,
+    "val_has_both_classes": true,
+    "best_iteration": 19
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3629,
+    "val_has_both_classes": true,
+    "best_iteration": 497
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1529,
+    "val_has_both_classes": true,
+    "best_iteration": 26
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4321,
+    "val_has_both_classes": true,
+    "best_iteration": 135
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1658,
+    "val_has_both_classes": true,
+    "best_iteration": 98
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3146,
+    "val_has_both_classes": true,
+    "best_iteration": 128
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5458,
+    "val_has_both_classes": true,
+    "best_iteration": 157
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3374,
+    "val_has_both_classes": true,
+    "best_iteration": 37
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4627,
+    "val_has_both_classes": true,
+    "best_iteration": 10
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5049,
+    "val_has_both_classes": true,
+    "best_iteration": 19
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5416,
+    "val_has_both_classes": true,
+    "best_iteration": 40
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.366,
+    "val_has_both_classes": true,
+    "best_iteration": 326
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3283,
+    "val_has_both_classes": true,
+    "best_iteration": 10
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3203,
+    "val_has_both_classes": true,
+    "best_iteration": 11
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1212,
+    "val_has_both_classes": true,
+    "best_iteration": 1
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4084,
+    "val_has_both_classes": true,
+    "best_iteration": 144
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1562,
+    "val_has_both_classes": true,
+    "best_iteration": 188
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3137,
+    "val_has_both_classes": true,
+    "best_iteration": 88
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5274,
+    "val_has_both_classes": true,
+    "best_iteration": 8
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3391,
+    "val_has_both_classes": true,
+    "best_iteration": 34
+   }
+  }
+ },
+ "xgb_fp-r2-1024": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4858,
+    "val_has_both_classes": true,
+    "best_iteration": 90
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5623,
+    "val_has_both_classes": true,
+    "best_iteration": 57
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5345,
+    "val_has_both_classes": true,
+    "best_iteration": 159
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3139,
+    "val_has_both_classes": true,
+    "best_iteration": 51
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3259,
+    "val_has_both_classes": true,
+    "best_iteration": 36
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3809,
+    "val_has_both_classes": true,
+    "best_iteration": 333
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1053,
+    "val_has_both_classes": true,
+    "best_iteration": 2
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4334,
+    "val_has_both_classes": true,
+    "best_iteration": 315
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.177,
+    "val_has_both_classes": true,
+    "best_iteration": 187
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3238,
+    "val_has_both_classes": true,
+    "best_iteration": 6
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5133,
+    "val_has_both_classes": true,
+    "best_iteration": 95
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4102,
+    "val_has_both_classes": true,
+    "best_iteration": 20
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4922,
+    "val_has_both_classes": true,
+    "best_iteration": 11
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5722,
+    "val_has_both_classes": true,
+    "best_iteration": 178
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5343,
+    "val_has_both_classes": true,
+    "best_iteration": 133
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3712,
+    "val_has_both_classes": true,
+    "best_iteration": 22
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3284,
+    "val_has_both_classes": true,
+    "best_iteration": 44
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3868,
+    "val_has_both_classes": true,
+    "best_iteration": 441
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1155,
+    "val_has_both_classes": true,
+    "best_iteration": 388
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4438,
+    "val_has_both_classes": true,
+    "best_iteration": 276
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1999,
+    "val_has_both_classes": true,
+    "best_iteration": 169
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.2819,
+    "val_has_both_classes": true,
+    "best_iteration": 135
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4898,
+    "val_has_both_classes": true,
+    "best_iteration": 103
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4093,
+    "val_has_both_classes": true,
+    "best_iteration": 72
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5045,
+    "val_has_both_classes": true,
+    "best_iteration": 25
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5568,
+    "val_has_both_classes": true,
+    "best_iteration": 24
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5448,
+    "val_has_both_classes": true,
+    "best_iteration": 21
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3126,
+    "val_has_both_classes": true,
+    "best_iteration": 116
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3088,
+    "val_has_both_classes": true,
+    "best_iteration": 30
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4107,
+    "val_has_both_classes": true,
+    "best_iteration": 393
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.123,
+    "val_has_both_classes": true,
+    "best_iteration": 1
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4309,
+    "val_has_both_classes": true,
+    "best_iteration": 29
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1521,
+    "val_has_both_classes": true,
+    "best_iteration": 93
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.296,
+    "val_has_both_classes": true,
+    "best_iteration": 116
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4998,
+    "val_has_both_classes": true,
+    "best_iteration": 76
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4165,
+    "val_has_both_classes": true,
+    "best_iteration": 62
+   }
+  }
+ },
+ "xgb_fp-r2-2048": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4816,
+    "val_has_both_classes": true,
+    "best_iteration": 7
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4825,
+    "val_has_both_classes": true,
+    "best_iteration": 44
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5354,
+    "val_has_both_classes": true,
+    "best_iteration": 159
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3663,
+    "val_has_both_classes": true,
+    "best_iteration": 175
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3256,
+    "val_has_both_classes": true,
+    "best_iteration": 42
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3772,
+    "val_has_both_classes": true,
+    "best_iteration": 259
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1232,
+    "val_has_both_classes": true,
+    "best_iteration": 4
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4162,
+    "val_has_both_classes": true,
+    "best_iteration": 281
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1722,
+    "val_has_both_classes": true,
+    "best_iteration": 132
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.32,
+    "val_has_both_classes": true,
+    "best_iteration": 10
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5223,
+    "val_has_both_classes": true,
+    "best_iteration": 137
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3796,
+    "val_has_both_classes": true,
+    "best_iteration": 40
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4979,
+    "val_has_both_classes": true,
+    "best_iteration": 2
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5179,
+    "val_has_both_classes": true,
+    "best_iteration": 44
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.519,
+    "val_has_both_classes": true,
+    "best_iteration": 163
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3575,
+    "val_has_both_classes": true,
+    "best_iteration": 106
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3372,
+    "val_has_both_classes": true,
+    "best_iteration": 83
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3718,
+    "val_has_both_classes": true,
+    "best_iteration": 106
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1223,
+    "val_has_both_classes": true,
+    "best_iteration": 235
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4398,
+    "val_has_both_classes": true,
+    "best_iteration": 172
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1938,
+    "val_has_both_classes": true,
+    "best_iteration": 45
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.318,
+    "val_has_both_classes": true,
+    "best_iteration": 177
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.512,
+    "val_has_both_classes": true,
+    "best_iteration": 90
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3634,
+    "val_has_both_classes": true,
+    "best_iteration": 32
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4626,
+    "val_has_both_classes": true,
+    "best_iteration": 9
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5052,
+    "val_has_both_classes": true,
+    "best_iteration": 33
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5397,
+    "val_has_both_classes": true,
+    "best_iteration": 53
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3427,
+    "val_has_both_classes": true,
+    "best_iteration": 146
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3126,
+    "val_has_both_classes": true,
+    "best_iteration": 75
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3876,
+    "val_has_both_classes": true,
+    "best_iteration": 358
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1333,
+    "val_has_both_classes": true,
+    "best_iteration": 239
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3964,
+    "val_has_both_classes": true,
+    "best_iteration": 31
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1831,
+    "val_has_both_classes": true,
+    "best_iteration": 145
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3225,
+    "val_has_both_classes": true,
+    "best_iteration": 82
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5157,
+    "val_has_both_classes": true,
+    "best_iteration": 141
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3558,
+    "val_has_both_classes": true,
+    "best_iteration": 89
+   }
+  }
+ },
+ "xgb_fp-r3-1024": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5106,
+    "val_has_both_classes": true,
+    "best_iteration": 44
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5119,
+    "val_has_both_classes": true,
+    "best_iteration": 25
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5101,
+    "val_has_both_classes": true,
+    "best_iteration": 140
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3467,
+    "val_has_both_classes": true,
+    "best_iteration": 32
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3172,
+    "val_has_both_classes": true,
+    "best_iteration": 89
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3312,
+    "val_has_both_classes": true,
+    "best_iteration": 180
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1701,
+    "val_has_both_classes": true,
+    "best_iteration": 305
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4084,
+    "val_has_both_classes": true,
+    "best_iteration": 66
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.2603,
+    "val_has_both_classes": true,
+    "best_iteration": 188
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3252,
+    "val_has_both_classes": true,
+    "best_iteration": 99
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5011,
+    "val_has_both_classes": true,
+    "best_iteration": 126
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3956,
+    "val_has_both_classes": true,
+    "best_iteration": 78
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4924,
+    "val_has_both_classes": true,
+    "best_iteration": 65
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5628,
+    "val_has_both_classes": true,
+    "best_iteration": 314
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4969,
+    "val_has_both_classes": true,
+    "best_iteration": 126
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3705,
+    "val_has_both_classes": true,
+    "best_iteration": 129
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3365,
+    "val_has_both_classes": true,
+    "best_iteration": 52
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.352,
+    "val_has_both_classes": true,
+    "best_iteration": 121
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.2072,
+    "val_has_both_classes": true,
+    "best_iteration": 392
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4181,
+    "val_has_both_classes": true,
+    "best_iteration": 155
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.2593,
+    "val_has_both_classes": true,
+    "best_iteration": 165
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3274,
+    "val_has_both_classes": true,
+    "best_iteration": 105
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4738,
+    "val_has_both_classes": true,
+    "best_iteration": 114
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4148,
+    "val_has_both_classes": true,
+    "best_iteration": 53
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5103,
+    "val_has_both_classes": true,
+    "best_iteration": 27
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5168,
+    "val_has_both_classes": true,
+    "best_iteration": 3
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.507,
+    "val_has_both_classes": true,
+    "best_iteration": 43
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3695,
+    "val_has_both_classes": true,
+    "best_iteration": 230
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3479,
+    "val_has_both_classes": true,
+    "best_iteration": 29
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3435,
+    "val_has_both_classes": true,
+    "best_iteration": 151
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1802,
+    "val_has_both_classes": true,
+    "best_iteration": 299
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3881,
+    "val_has_both_classes": true,
+    "best_iteration": 31
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.2664,
+    "val_has_both_classes": true,
+    "best_iteration": 215
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3382,
+    "val_has_both_classes": true,
+    "best_iteration": 90
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4907,
+    "val_has_both_classes": true,
+    "best_iteration": 123
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4228,
+    "val_has_both_classes": true,
+    "best_iteration": 21
+   }
+  }
+ },
+ "xgb_fp-r3-2048": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4449,
+    "val_has_both_classes": true,
+    "best_iteration": 10
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4998,
+    "val_has_both_classes": true,
+    "best_iteration": 161
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5115,
+    "val_has_both_classes": true,
+    "best_iteration": 195
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3791,
+    "val_has_both_classes": true,
+    "best_iteration": 115
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3379,
+    "val_has_both_classes": true,
+    "best_iteration": 59
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3382,
+    "val_has_both_classes": true,
+    "best_iteration": 212
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1349,
+    "val_has_both_classes": true,
+    "best_iteration": 197
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4309,
+    "val_has_both_classes": true,
+    "best_iteration": 116
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1613,
+    "val_has_both_classes": true,
+    "best_iteration": 67
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3237,
+    "val_has_both_classes": true,
+    "best_iteration": 132
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5188,
+    "val_has_both_classes": true,
+    "best_iteration": 134
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3875,
+    "val_has_both_classes": true,
+    "best_iteration": 159
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4865,
+    "val_has_both_classes": true,
+    "best_iteration": 11
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4795,
+    "val_has_both_classes": true,
+    "best_iteration": 46
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5148,
+    "val_has_both_classes": true,
+    "best_iteration": 126
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3636,
+    "val_has_both_classes": true,
+    "best_iteration": 177
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3414,
+    "val_has_both_classes": true,
+    "best_iteration": 55
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3312,
+    "val_has_both_classes": true,
+    "best_iteration": 92
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1755,
+    "val_has_both_classes": true,
+    "best_iteration": 730
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3967,
+    "val_has_both_classes": true,
+    "best_iteration": 38
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1861,
+    "val_has_both_classes": true,
+    "best_iteration": 130
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3206,
+    "val_has_both_classes": true,
+    "best_iteration": 221
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5303,
+    "val_has_both_classes": true,
+    "best_iteration": 89
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3737,
+    "val_has_both_classes": true,
+    "best_iteration": 82
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4553,
+    "val_has_both_classes": true,
+    "best_iteration": 56
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4546,
+    "val_has_both_classes": true,
+    "best_iteration": 48
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4959,
+    "val_has_both_classes": true,
+    "best_iteration": 44
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3594,
+    "val_has_both_classes": true,
+    "best_iteration": 105
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3433,
+    "val_has_both_classes": true,
+    "best_iteration": 291
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3383,
+    "val_has_both_classes": true,
+    "best_iteration": 94
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1626,
+    "val_has_both_classes": true,
+    "best_iteration": 397
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4124,
+    "val_has_both_classes": true,
+    "best_iteration": 95
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1744,
+    "val_has_both_classes": true,
+    "best_iteration": 110
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3661,
+    "val_has_both_classes": true,
+    "best_iteration": 151
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5189,
+    "val_has_both_classes": true,
+    "best_iteration": 152
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3651,
+    "val_has_both_classes": true,
+    "best_iteration": 223
+   }
+  }
+ },
+ "xgb_desc": {
+  "scaffold_det__seed0": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4862,
+    "val_has_both_classes": true,
+    "best_iteration": 262
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5051,
+    "val_has_both_classes": true,
+    "best_iteration": 18
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.6287,
+    "val_has_both_classes": true,
+    "best_iteration": 114
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3619,
+    "val_has_both_classes": true,
+    "best_iteration": 133
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4727,
+    "val_has_both_classes": true,
+    "best_iteration": 33
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3845,
+    "val_has_both_classes": true,
+    "best_iteration": 76
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1551,
+    "val_has_both_classes": true,
+    "best_iteration": 29
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5495,
+    "val_has_both_classes": true,
+    "best_iteration": 166
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3602,
+    "val_has_both_classes": true,
+    "best_iteration": 98
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4187,
+    "val_has_both_classes": true,
+    "best_iteration": 11
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5629,
+    "val_has_both_classes": true,
+    "best_iteration": 266
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4321,
+    "val_has_both_classes": true,
+    "best_iteration": 49
+   }
+  },
+  "scaffold_det__seed1": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4985,
+    "val_has_both_classes": true,
+    "best_iteration": 243
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5265,
+    "val_has_both_classes": true,
+    "best_iteration": 225
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.6203,
+    "val_has_both_classes": true,
+    "best_iteration": 232
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3499,
+    "val_has_both_classes": true,
+    "best_iteration": 157
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4811,
+    "val_has_both_classes": true,
+    "best_iteration": 74
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3887,
+    "val_has_both_classes": true,
+    "best_iteration": 120
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.1637,
+    "val_has_both_classes": true,
+    "best_iteration": 10
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5657,
+    "val_has_both_classes": true,
+    "best_iteration": 145
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.2725,
+    "val_has_both_classes": true,
+    "best_iteration": 163
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3538,
+    "val_has_both_classes": true,
+    "best_iteration": 31
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.5548,
+    "val_has_both_classes": true,
+    "best_iteration": 277
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.4288,
+    "val_has_both_classes": true,
+    "best_iteration": 168
+   }
+  },
+  "scaffold_det__seed2": {
+   "NR-AR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.494,
+    "val_has_both_classes": true,
+    "best_iteration": 275
+   },
+   "NR-AR-LBD": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5084,
+    "val_has_both_classes": true,
+    "best_iteration": 9
+   },
+   "NR-AhR": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.6384,
+    "val_has_both_classes": true,
+    "best_iteration": 132
+   },
+   "NR-Aromatase": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3506,
+    "val_has_both_classes": true,
+    "best_iteration": 109
+   },
+   "NR-ER": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4849,
+    "val_has_both_classes": true,
+    "best_iteration": 60
+   },
+   "NR-ER-LBD": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.3844,
+    "val_has_both_classes": true,
+    "best_iteration": 43
+   },
+   "NR-PPAR-gamma": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.1663,
+    "val_has_both_classes": true,
+    "best_iteration": 11
+   },
+   "SR-ARE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.5732,
+    "val_has_both_classes": true,
+    "best_iteration": 104
+   },
+   "SR-ATAD5": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.2762,
+    "val_has_both_classes": true,
+    "best_iteration": 183
+   },
+   "SR-HSE": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.3923,
+    "val_has_both_classes": true,
+    "best_iteration": 47
+   },
+   "SR-MMP": {
+    "params": {
+     "max_depth": 4
+    },
+    "val_pr_auc": 0.575,
+    "val_has_both_classes": true,
+    "best_iteration": 259
+   },
+   "SR-p53": {
+    "params": {
+     "max_depth": 6
+    },
+    "val_pr_auc": 0.4454,
+    "val_has_both_classes": true,
+    "best_iteration": 34
+   }
+  }
+ }
+}
