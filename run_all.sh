@@ -12,6 +12,7 @@ python -m tox.train_aml
 python -m tox.ablate_fp
 python -m tox.metrics --preds results/preds/ --role test
 python -m tox.metrics --preds results/ablations/preds --out results/ablations/metrics --role test
+python -m tox.ablate_fp --summary
 python -m tox.aggregate
 
 # figures + analysis
