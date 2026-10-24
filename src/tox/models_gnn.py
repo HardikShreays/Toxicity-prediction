@@ -87,28 +87,34 @@ class GCN(nn.Module):
 
 
 class MPNN(nn.Module):
-    """Message passing with bond features via GINEConv (Hu et al. 2020):
-    h_i' = MLP((1+eps) h_i + sum_j ReLU(h_j + W e_ij)). Residual connections after layer 1."""
+    """Plan B2: n_layers x GINEConv (each with an MLP and bond features via edge_dim), the same
+    mean||max readout and 256 -> 128 -> 12 head as the GCN.
+
+    GINE (Hu et al. 2020): h_i' = MLP((1+eps) h_i + sum_j ReLU(h_j + W e_ij)); the bond features
+    e_ij are projected by a learned linear map W, which is how this model uses bonds and GCN does
+    not. Each layer is followed by BatchNorm + ReLU + dropout, mirroring the GCN block (the plan
+    gives that block explicitly for gcn only; reusing it here is our assumption). No input
+    embedding and no residual connections: the plan lists neither.
+    """
 
     def __init__(self, in_dim=ATOM_DIM, edge_dim=BOND_DIM, hidden=128, n_layers=3,
                  pooling="meanmax", dropout=0.2, use_bond_features=True,
                  n_tasks=len(TASKS), **_):
         super().__init__()
         self.use_bond_features = use_bond_features
-        self.embed = nn.Linear(in_dim, hidden)
+        dims = [in_dim] + [hidden] * n_layers
         self.convs = nn.ModuleList(
-            GINEConv(nn.Sequential(nn.Linear(hidden, hidden), nn.ReLU(), nn.Linear(hidden, hidden)),
-                     edge_dim=edge_dim, train_eps=True) for _ in range(n_layers))
+            GINEConv(nn.Sequential(nn.Linear(a, hidden), nn.ReLU(), nn.Linear(hidden, hidden)),
+                     edge_dim=edge_dim, train_eps=True) for a in dims[:-1])
         self.norms = nn.ModuleList(nn.BatchNorm1d(hidden) for _ in range(n_layers))
         self.pooling, self.dropout = _check_pooling(pooling), dropout
         self.head = _Head(pooled_dim(hidden, pooling), hidden, n_tasks, dropout)
 
     def forward(self, batch):
         e = _bond_input(batch, self.use_bond_features)
-        h = self.embed(batch.x)
+        h = batch.x
         for conv, norm in zip(self.convs, self.norms):
-            h_new = F.relu(norm(conv(h, batch.edge_index, e)))
-            h = F.dropout(h + h_new, self.dropout, self.training)    # residual
+            h = F.dropout(F.relu(norm(conv(h, batch.edge_index, e))), self.dropout, self.training)
         return self.head(readout(h, batch.batch, self.pooling))
 
 

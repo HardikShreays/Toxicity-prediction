@@ -115,3 +115,15 @@ def test_head_width_scales_with_hidden_size(name):
     m = build_model(name, hidden=64)                                # tuning grid hidden in {64,128,256}
     lin = [l for l in m.head.net if isinstance(l, torch.nn.Linear)]
     assert [(l.in_features, l.out_features) for l in lin] == [(128, 64), (64, 12)]
+
+
+@pytest.mark.parametrize("n_layers", [3, 4])
+def test_mpnn_is_n_gine_layers_without_extras(n_layers):
+    from torch_geometric.nn import GINEConv
+    from tox.featurize_graph import ATOM_DIM, BOND_DIM
+    m = build_model("mpnn", n_layers=n_layers)
+    assert len(m.convs) == n_layers and all(isinstance(c, GINEConv) for c in m.convs)
+    assert not hasattr(m, "embed")                                  # no input embedding (plan lists none)
+    assert m.convs[0].lin.in_channels == BOND_DIM                  # bonds enter via edge_dim
+    assert m.convs[0].lin.out_channels == ATOM_DIM
+    assert m.convs[0].nn[0].in_features == ATOM_DIM and m.convs[1].nn[0].in_features == 128
