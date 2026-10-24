@@ -12,7 +12,8 @@ Python 3.11.
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pytest                      # 21 tests: metrics, splits, featurization
+pytest                      # 29 tests: metrics, splits, featurization, xgb importance
+                            # (the 7 real-split checks skip until tox.data has built the parquet)
 ```
 
 ## Reproduce everything
@@ -82,3 +83,5 @@ metrics are committed.
 - Missing labels are never filled: each endpoint trains on its labelled rows, and the scorer masks NaNs.
 - Everything fitted (imputer, scaler, class weights, `scale_pos_weight`) sees train rows only.
 - `Ipc` is log-transformed because raw values (~1e41) overflow float32 in the tree models.
+- Validation is reused: hyper-parameters, the reported model and XGBoost early stopping are all chosen on it,
+  so val scores are optimistic (33/216 XGBoost fits stop at <= 20 trees). Test is never used for any choice.

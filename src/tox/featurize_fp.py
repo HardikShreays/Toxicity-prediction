@@ -2,6 +2,7 @@
 row-aligned with the clean parquet (row i of each .npy == row i of C1)."""
 import numpy as np
 import pandas as pd
+import pyarrow.parquet as pq
 import yaml
 from rdkit import Chem, RDLogger
 from rdkit.Chem import Descriptors, rdFingerprintGenerator
@@ -27,10 +28,17 @@ def rdkit_desc(smi):
 
 
 def load_features():
-    """-> (fp uint8 [n, 2048], desc float64 [n, n_desc]); computes the caches if missing."""
+    """-> (fp uint8 [n, 2048], desc float64 [n, n_desc]); computes the caches if missing.
+    Fails loudly if a cache no longer lines up with C1 (e.g. the parquet was rebuilt after featurizing),
+    because a stale cache would silently pair molecules with the wrong labels."""
     if not (FP_CACHE.exists() and DESC_CACHE.exists()):
         main()
-    return np.load(FP_CACHE), np.load(DESC_CACHE)
+    fp, desc = np.load(FP_CACHE), np.load(DESC_CACHE)
+    n = pq.read_metadata(CLEAN).num_rows
+    if not fp.shape[0] == desc.shape[0] == n:
+        raise ValueError(f"feature caches out of date: fp has {fp.shape[0]} rows, desc {desc.shape[0]}, "
+                         f"{CLEAN.name} {n}. Rerun python -m tox.featurize_fp")
+    return fp, desc
 
 
 def main():

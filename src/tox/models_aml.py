@@ -55,3 +55,14 @@ def make_model(algo, params, seed, y_train, early_stop=True):
         scale_pos_weight=(len(y_train) - n_pos) / n_pos,        # n_neg / n_pos, from train only
         early_stopping_rounds=c["early_stopping_rounds"] if early_stop else None,
         n_jobs=-1, random_state=seed, **params)
+
+
+def xgb_gain(model):
+    """Gain importance from the trees predict_proba actually uses. With early stopping the booster keeps
+    the `early_stopping_rounds` trees grown after best_iteration, which must not count."""
+    booster = model.get_booster()
+    try:
+        booster = booster[: model.best_iteration + 1]
+    except AttributeError:                      # no early stopping -> every tree is used
+        pass
+    return booster.get_score(importance_type="gain")

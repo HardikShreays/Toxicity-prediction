@@ -14,7 +14,7 @@ from sklearn.metrics import average_precision_score
 
 from tox.constants import AML_IMPORTANCE, AML_PARAMS, CLEAN, PREDS, SEEDS, TASKS
 from tox.featurize_fp import DESC_NAMES, load_features
-from tox.models_aml import desc_pipeline, grid, make_model
+from tox.models_aml import desc_pipeline, grid, make_model, xgb_gain
 from tox.splits import load
 
 MODELS = [f"{a}_{f}" for a in ("lr", "rf", "xgb") for f in ("fp", "fpdesc")]
@@ -81,7 +81,7 @@ def run(model_name, split, seed, df, fp, desc, log, out=PREDS):
             probs[k][:, j] = model.predict_proba(X[k])[:, 1]
         run_log[t] = info
         if algo == "xgb":
-            gain = model.get_booster().get_score(importance_type="gain")
+            gain = xgb_gain(model)
             importance += [{"task": t, "feature": names[int(f[1:])], "gain": g} for f, g in gain.items()]
 
     preds = pd.concat([pd.DataFrame({"smiles": s[k], "role": k, **dict(zip(TASKS, probs[k].T))})
