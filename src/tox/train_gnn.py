@@ -109,13 +109,19 @@ def labels_of(graphs) -> np.ndarray:
     return torch.cat([g.y for g in graphs]).numpy()
 
 
-def val_scores(model, graphs) -> dict:
+def val_scores(model, graphs, task: int | None = None) -> dict:
     """Validation mean ROC-AUC and mean PR-AUC over the endpoints that can be scored.
 
     Both come from the shared scorer. ROC-AUC drives early stopping; PR-AUC is what we use to
-    choose between hyper-parameter configs (plan B4 / H3.4).
+    choose between hyper-parameter configs (plan B4 / H3.4). With `task=k` the model has a single
+    output (single-task ablation): only endpoint k is scored, the others are NaN-masked.
     """
-    s = score(labels_of(graphs), predict_probs(model, graphs))
+    y, p = labels_of(graphs), predict_probs(model, graphs)
+    if task is not None:
+        full_y, full_p = np.full_like(y, np.nan), np.zeros_like(y, dtype=float)
+        full_y[:, task], full_p[:, task] = y[:, task], p[:, 0]
+        y, p = full_y, full_p
+    s = score(y, p)
     return {"roc_auc": float(np.nanmean(s.roc_auc)), "pr_auc": float(np.nanmean(s.pr_auc))}
 
 
@@ -137,13 +143,16 @@ def _set_rng_state(st: dict) -> None:
 
 
 def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None,
-        ckpt_dir=None) -> dict:
+        ckpt_dir=None, task: int | None = None) -> dict:
     """Train with early stopping on validation mean ROC-AUC; restores the best-epoch weights.
 
     Stops when `patience` epochs pass without a new best, or after `max_epochs`. Only train and
     validation graphs are accepted here, so test labels cannot influence training, early
     stopping or checkpoint selection. If `ckpt_dir` is given the run is checkpointed every epoch
     and resumes from `last.pt` when it exists (same cfg and seed required).
+
+    task=None: normal multi-task training (12 logits). task=k: single-task ablation, the model
+    has one output and trains/early-stops on endpoint k only (labels of other endpoints unused).
     """
     set_seed(seed)
     opt = torch.optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
@@ -172,11 +181,15 @@ def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None,
         losses = []
         for b in loader:
             opt.zero_grad()
-            loss = masked_bce(model(b), b.y, pos_weight)
+            if task is None:
+                loss = masked_bce(model(b), b.y, pos_weight)
+            else:
+                loss = masked_bce(model(b), b.y[:, [task]],
+                                  None if pos_weight is None else pos_weight[[task]])
             loss.backward()
             opt.step()
             losses.append(loss.item())
-        v = val_scores(model, val_graphs)
+        v = val_scores(model, val_graphs, task)
         history.append({"epoch": epoch, "train_loss": float(np.mean(losses)),
                         "val_roc_auc": v["roc_auc"], "val_pr_auc": v["pr_auc"]})
         roc = v["roc_auc"] if np.isfinite(v["roc_auc"]) else -np.inf   # unscorable val never "improves"
@@ -230,12 +243,12 @@ def load_split_graphs(split: str, roles=("train", "val", "test")) -> dict:
             for r in roles}
 
 
-def export_predictions(model, graphs_by_role: dict, path) -> pd.DataFrame:
+def write_c3(graphs_by_role: dict, probs_by_role: dict, path) -> pd.DataFrame:
     """Write a contract-C3 file: smiles, role + 12 probability columns named exactly as TASKS."""
     frames = []
     for role in ("val", "test"):
-        g = graphs_by_role[role]
-        probs = predict_probs(model, g)
+        g, probs = graphs_by_role[role], probs_by_role[role]
+        assert probs.shape == (len(g), len(TASKS))
         frames.append(pd.DataFrame({"smiles": [x.smiles for x in g], "role": role,
                                     **{t: probs[:, j] for j, t in enumerate(TASKS)}}))
     df = pd.concat(frames, ignore_index=True)
@@ -244,6 +257,12 @@ def export_predictions(model, graphs_by_role: dict, path) -> pd.DataFrame:
     path.parent.mkdir(parents=True, exist_ok=True)
     df.to_parquet(path, index=False)
     return df
+
+
+def export_predictions(model, graphs_by_role: dict, path) -> pd.DataFrame:
+    """C3 file for a 12-output model; test is predicted only here, after training has finished."""
+    return write_c3(graphs_by_role, {r: predict_probs(model, graphs_by_role[r])
+                                     for r in ("val", "test")}, path)
 
 
 def load_config(overrides: dict | None = None) -> dict:
@@ -295,19 +314,20 @@ def run_grid(models, force: bool = False, runner=None, preds_dir=None, params_pa
 
 
 def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GNN_RESULTS,
-        graphs=None, fig_dir=None) -> dict:
+        graphs=None, fig_dir=None, tag: str | None = None) -> dict:
+    """One training run. `tag` (ablations) replaces the model token in file names, e.g. mpnn-noedge."""
     model_name = canonical_name(model_name)          # files always use the plan token, e.g. afp
     graphs = graphs or load_split_graphs(split)
     pw = make_pos_weight(cfg, graphs["train"])
     set_seed(seed)
     model = build_model(model_name, **{k: cfg[k] for k in
                         ("hidden", "n_layers", "pooling", "dropout", "use_bond_features")})
-    stem = f"{model_name}__{split}__seed{seed}"
+    stem = f"{tag or model_name}__{split}__seed{seed}"
     info = fit(model, graphs["train"], graphs["val"], cfg, seed, pw, ckpt_dir=log_dir / "ckpt" / stem)
     export_predictions(model, graphs, out / f"{stem}.parquet")
     log_dir.mkdir(parents=True, exist_ok=True)
     (log_dir / f"{stem}.json").write_text(json.dumps(
-        {"model": model_name, "split": split, "seed": seed, "config": cfg,
+        {"model": model_name, "tag": tag or model_name, "split": split, "seed": seed, "config": cfg,
          "early_stopping": {"metric": "val_mean_roc_auc", "patience": cfg["patience"],
                             "max_epochs": cfg["max_epochs"]},
          "versions": {"torch": torch.__version__},

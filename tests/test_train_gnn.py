@@ -89,7 +89,7 @@ def _scripted(monkeypatch, rocs, prs=None):
     prs = prs or [0.1] * len(rocs)
     it = iter(zip(rocs, prs))
     monkeypatch.setattr("tox.train_gnn.val_scores",
-                        lambda model, g: dict(zip(("roc_auc", "pr_auc"), next(it))))
+                        lambda model, g, task=None: dict(zip(("roc_auc", "pr_auc"), next(it))))
 
 
 def test_config_matches_plan_b4():
@@ -164,10 +164,10 @@ def test_checkpoints_every_epoch_and_best(graphs, tmp_path):
 def test_last_checkpoint_is_written_each_epoch(graphs, tmp_path, monkeypatch):
     seen = []
     real = val_scores
-    def spy(model, g):
+    def spy(model, g, task=None):
         seen.append(torch.load(tmp_path / "last.pt", weights_only=False)["epoch"]
                     if (tmp_path / "last.pt").exists() else -1)
-        return real(model, g)
+        return real(model, g, task)
     monkeypatch.setattr("tox.train_gnn.val_scores", spy)
     fit(build_model("gcn", hidden=8, n_layers=1), graphs["train"], graphs["val"],
         dict(CFG, max_epochs=4, patience=10), seed=0, ckpt_dir=tmp_path)
@@ -182,11 +182,11 @@ def test_resume_after_interruption_equals_uninterrupted_run(graphs, tmp_path, mo
     full = fit(fresh(), graphs["train"], graphs["val"], cfg, seed=4, ckpt_dir=tmp_path / "a")
 
     calls, real = [], val_scores
-    def flaky(model, g):
+    def flaky(model, g, task=None):
         calls.append(1)
         if len(calls) == 4:
             raise ConnectionError("colab disconnected")
-        return real(model, g)
+        return real(model, g, task)
     monkeypatch.setattr("tox.train_gnn.val_scores", flaky)
     with pytest.raises(ConnectionError):
         fit(fresh(), graphs["train"], graphs["val"], cfg, seed=4, ckpt_dir=tmp_path / "b")
