@@ -1,0 +1,15 @@
+# B4 - GNN training defaults. Hyper-parameters are tuned on validation only; test is never used.
+hidden: 128
+n_layers: 3
+pooling: mean            # mean | sum | max (AttentiveFP has its own readout)
+dropout: 0.2
+use_bond_features: true
+lr: 0.001
+weight_decay: 0.00001
+batch_size: 64
+max_epochs: 100
+patience: 15             # early stopping on val mean PR-AUC (assumption: plan's exact policy not in repo)
+pos_weight:
+  enabled: false         # off until the plan's clipping rule is confirmed
+  clip_min: null         # REQUIRED when enabled - must come from the plan, not guessed
+  clip_max: null
