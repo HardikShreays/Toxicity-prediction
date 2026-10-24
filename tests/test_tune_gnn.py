@@ -132,3 +132,15 @@ def test_loading_only_train_and_val_never_touches_test():
         pytest.skip("C1 not built")
     g = load_split_graphs("scaffold_det", roles=("train", "val"))
     assert set(g) == {"train", "val"}
+
+
+def test_run_grid_passes_log_fig_dirs_and_epoch_cap_only_when_given(tmp_path, monkeypatch):
+    monkeypatch.setattr("tox.train_gnn.load_split_graphs", lambda split, roles=None: {})
+    seen = []
+    runner = lambda m, split, seed, cfg, out, graphs, **kw: seen.append((cfg["max_epochs"], kw))
+    run_grid(["gcn"], runner=runner, preds_dir=tmp_path / "p", params_path=_params(tmp_path))
+    assert seen[0] == (200, {})                                  # real runs: defaults untouched
+    seen.clear()
+    run_grid(["gcn"], runner=runner, preds_dir=tmp_path / "p", params_path=_params(tmp_path),
+             log_dir=tmp_path / "l", fig_dir=tmp_path / "f", max_epochs=2)
+    assert seen[0] == (2, {"log_dir": tmp_path / "l", "fig_dir": tmp_path / "f"})

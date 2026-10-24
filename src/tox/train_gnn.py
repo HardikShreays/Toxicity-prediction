@@ -305,10 +305,12 @@ def frozen_config(model_name: str, params_path=None) -> dict:
     return load_config({k: best[k] for k in TUNED_KEYS})
 
 
-def run_grid(models, force: bool = False, runner=None, preds_dir=None, params_path=None) -> list:
+def run_grid(models, force: bool = False, runner=None, preds_dir=None, params_path=None,
+             log_dir=None, fig_dir=None, max_epochs: int | None = None) -> list:
     """Final runs with FROZEN hyper-parameters: every (split, seed) in RUNS for each model.
 
-    Resumable: a run whose C3 file already exists is skipped unless force=True.
+    Resumable: a run whose C3 file already exists is skipped unless force=True. log_dir, fig_dir
+    and max_epochs exist so smoke tests can write elsewhere and stay short (never for real runs).
     """
     runner = runner or run
     preds_dir = PREDS if preds_dir is None else preds_dir
@@ -316,12 +318,15 @@ def run_grid(models, force: bool = False, runner=None, preds_dir=None, params_pa
     for m in models:
         m = canonical_name(m)
         cfg = frozen_config(m, params_path)
+        if max_epochs is not None:
+            cfg["max_epochs"] = max_epochs
+        extra = {k: v for k, v in (("log_dir", log_dir), ("fig_dir", fig_dir)) if v is not None}
         for split, seed in RUNS:
             if not force and (preds_dir / f"{m}__{split}__seed{seed}.parquet").exists():
                 continue
             if split not in cache:
                 cache[split] = load_split_graphs(split)
-            runner(m, split, seed, cfg, out=preds_dir, graphs=cache[split])
+            runner(m, split, seed, cfg, out=preds_dir, graphs=cache[split], **extra)
             done.append((m, split, seed))
     return done
 
@@ -357,13 +362,13 @@ def main():
     ap.add_argument("--model", choices=sorted(MODELS) + sorted(ALIASES))
     ap.add_argument("--split")
     ap.add_argument("--seed", type=int, default=0)
-    ap.add_argument("--epochs", type=int, help="override max_epochs (smoke tests)")
+    ap.add_argument("--epochs", type=int, help="override max_epochs (smoke tests only)")
     ap.add_argument("--grid", action="store_true", help="all RUNS for --models with tuned params")
     ap.add_argument("--models", nargs="+", default=sorted(MODELS))
     ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
     if args.grid:
-        run_grid(args.models, force=args.force)
+        run_grid(args.models, force=args.force, max_epochs=args.epochs)
     else:
         if not (args.model and args.split):
             ap.error("--model and --split are required unless --grid is given")
