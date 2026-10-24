@@ -2,15 +2,22 @@
 
 CLI:  python -m tox.train_gnn --model mpnn --split scaffold_det --seed 0
 
-Protocol: train on `train`, early-stop and select the best epoch on `val` (mean PR-AUC from the
-shared `tox.metrics.score`), then restore the best weights and predict `val` and `test`. The test
-set is only touched by `predict`, after training has finished; `fit` never receives it.
+Protocol (plan B4): train on `train`; early-stop on `val` mean ROC-AUC (patience 25, max 200
+epochs), computed with the shared `tox.metrics.score`; restore the best-epoch weights; then
+predict `val` and `test`. Validation mean PR-AUC is logged every epoch too, but only as the
+metric for choosing between hyper-parameter configs, never for stopping. The test set is only
+touched by `export_predictions`, after training has finished; `fit` never receives it.
+
+Checkpoints: with `ckpt_dir` set, `fit` writes `last.pt` after EVERY epoch (model, optimizer, RNG
+states, history, early-stopping counters) and `best.pt` whenever validation ROC-AUC improves, so
+a disconnected session (Colab) resumes exactly where it stopped. *.pt files are git-ignored.
 """
 from __future__ import annotations
 
 import argparse
 import copy
 import json
+import os
 import random
 
 import numpy as np
@@ -20,7 +27,7 @@ import torch.nn.functional as F
 import yaml
 from torch_geometric.loader import DataLoader
 
-from tox.constants import CLEAN, CONFIGS, PREDS, RESULTS, SPLITS, TASKS
+from tox.constants import CLEAN, CONFIGS, FIGURES, PREDS, RESULTS, SPLITS, TASKS
 from tox.featurize_graph import build_graphs
 from tox.metrics import score
 from tox.models_gnn import MODELS, build_model
@@ -93,25 +100,66 @@ def labels_of(graphs) -> np.ndarray:
     return torch.cat([g.y for g in graphs]).numpy()
 
 
-def val_score(model, graphs) -> float:
-    """Mean PR-AUC over the endpoints that can be scored (via the shared scorer)."""
+def val_scores(model, graphs) -> dict:
+    """Validation mean ROC-AUC and mean PR-AUC over the endpoints that can be scored.
+
+    Both come from the shared scorer. ROC-AUC drives early stopping; PR-AUC is what we use to
+    choose between hyper-parameter configs (plan B4 / H3.4).
+    """
     s = score(labels_of(graphs), predict_probs(model, graphs))
-    return float(np.nanmean(s.pr_auc))
+    return {"roc_auc": float(np.nanmean(s.roc_auc)), "pr_auc": float(np.nanmean(s.pr_auc))}
 
 
-def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None) -> dict:
-    """Train with early stopping on validation mean PR-AUC; restores the best weights.
+def _atomic_save(obj, path) -> None:
+    """Write via a temp file so a disconnect mid-write cannot corrupt the checkpoint."""
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    torch.save(obj, tmp)
+    os.replace(tmp, path)
 
-    Only train and validation graphs are accepted here, so test labels cannot influence
-    training, early stopping or checkpoint selection.
+
+def _rng_state() -> dict:
+    return {"torch": torch.get_rng_state(), "numpy": np.random.get_state(), "python": random.getstate()}
+
+
+def _set_rng_state(st: dict) -> None:
+    torch.set_rng_state(st["torch"])
+    np.random.set_state(st["numpy"])
+    random.setstate(st["python"])
+
+
+def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None,
+        ckpt_dir=None) -> dict:
+    """Train with early stopping on validation mean ROC-AUC; restores the best-epoch weights.
+
+    Stops when `patience` epochs pass without a new best, or after `max_epochs`. Only train and
+    validation graphs are accepted here, so test labels cannot influence training, early
+    stopping or checkpoint selection. If `ckpt_dir` is given the run is checkpointed every epoch
+    and resumes from `last.pt` when it exists (same cfg and seed required).
     """
     set_seed(seed)
     opt = torch.optim.Adam(model.parameters(), lr=cfg["lr"], weight_decay=cfg["weight_decay"])
-    loader = DataLoader(train_graphs, batch_size=cfg["batch_size"], shuffle=True,
-                        generator=torch.Generator().manual_seed(seed), drop_last=len(train_graphs) > cfg["batch_size"])
-    best, best_epoch, best_state, history = -np.inf, -1, None, []
-    for epoch in range(cfg["max_epochs"]):
+    best, best_epoch, best_state, history, start, done = -np.inf, -1, None, [], 0, False
+    last_path = None if ckpt_dir is None else ckpt_dir / "last.pt"
+    if last_path is not None:
+        ckpt_dir.mkdir(parents=True, exist_ok=True)
+        if last_path.exists():
+            # our own file (contains numpy RNG state), so full unpickling is intended
+            ck = torch.load(last_path, weights_only=False)
+            if ck["seed"] != seed or ck["cfg"] != cfg:
+                raise ValueError(f"{last_path} was written with a different seed/config; "
+                                 "delete it or use another log_dir")
+            model.load_state_dict(ck["model"])
+            opt.load_state_dict(ck["opt"])
+            _set_rng_state(ck["rng"])
+            best, best_epoch, best_state = ck["best"], ck["best_epoch"], ck["best_state"]
+            history, start, done = ck["history"], ck["epoch"] + 1, ck["done"]
+
+    for epoch in range(start, 0 if done else cfg["max_epochs"]):
         model.train()
+        # shuffling depends only on (seed, epoch), so a resumed run sees the same batches
+        loader = DataLoader(train_graphs, batch_size=cfg["batch_size"], shuffle=True,
+                            generator=torch.Generator().manual_seed(seed * 100003 + epoch),
+                            drop_last=len(train_graphs) > cfg["batch_size"])
         losses = []
         for b in loader:
             opt.zero_grad()
@@ -119,14 +167,49 @@ def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None) 
             loss.backward()
             opt.step()
             losses.append(loss.item())
-        v = val_score(model, val_graphs)
-        history.append({"epoch": epoch, "train_loss": float(np.mean(losses)), "val_pr_auc": v})
-        if v > best:
-            best, best_epoch, best_state = v, epoch, copy.deepcopy(model.state_dict())
-        elif epoch - best_epoch >= cfg["patience"]:
+        v = val_scores(model, val_graphs)
+        history.append({"epoch": epoch, "train_loss": float(np.mean(losses)),
+                        "val_roc_auc": v["roc_auc"], "val_pr_auc": v["pr_auc"]})
+        roc = v["roc_auc"] if np.isfinite(v["roc_auc"]) else -np.inf   # unscorable val never "improves"
+        improved = roc > best
+        if improved:
+            best, best_epoch, best_state = roc, epoch, copy.deepcopy(model.state_dict())
+        stop = (not improved) and best_epoch >= 0 and epoch - best_epoch >= cfg["patience"]
+        if last_path is not None:
+            if improved:
+                _atomic_save({"model": best_state, "epoch": epoch, "val_roc_auc": roc}, ckpt_dir / "best.pt")
+            _atomic_save({"model": model.state_dict(), "opt": opt.state_dict(), "rng": _rng_state(),
+                          "best": best, "best_epoch": best_epoch, "best_state": best_state,
+                          "history": history, "epoch": epoch, "seed": seed, "cfg": cfg,
+                          "done": stop or epoch + 1 >= cfg["max_epochs"]}, last_path)
+        if stop:
             break
+    if best_state is None:
+        raise RuntimeError("validation ROC-AUC was never computable; check the val split labels")
     model.load_state_dict(best_state)
-    return {"best_epoch": best_epoch, "best_val_pr_auc": best, "epochs_run": len(history), "history": history}
+    h = history[best_epoch]
+    return {"best_epoch": best_epoch, "best_val_roc_auc": h["val_roc_auc"],
+            "best_val_pr_auc": h["val_pr_auc"],           # config-selection metric, at the ROC-best epoch
+            "epochs_run": len(history), "history": history}
+
+
+def plot_curves(info: dict, path) -> None:
+    """Learning curves (train loss, val ROC-AUC) as a PNG; the best epoch is marked."""
+    import matplotlib
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+    ep = [h["epoch"] for h in info["history"]]
+    fig, ax = plt.subplots(1, 2, figsize=(9, 3.2))
+    ax[0].plot(ep, [h["train_loss"] for h in info["history"]])
+    ax[0].set(xlabel="epoch", ylabel="train masked BCE", title="Training loss")
+    ax[1].plot(ep, [h["val_roc_auc"] for h in info["history"]])
+    ax[1].axvline(info["best_epoch"], ls="--", c="gray", label=f"best epoch {info['best_epoch']}")
+    ax[1].set(xlabel="epoch", ylabel="val mean ROC-AUC", title="Validation")
+    ax[1].legend()
+    fig.tight_layout()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(path, dpi=300)
+    plt.close(fig)
 
 
 def load_split_graphs(split: str) -> dict:
@@ -160,7 +243,7 @@ def load_config(overrides: dict | None = None) -> dict:
 
 
 def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GNN_RESULTS,
-        graphs=None) -> dict:
+        graphs=None, fig_dir=None) -> dict:
     graphs = graphs or load_split_graphs(split)
     pw = None
     if cfg["pos_weight"]["enabled"]:
@@ -171,16 +254,20 @@ def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GN
     set_seed(seed)
     model = build_model(model_name, **{k: cfg[k] for k in
                         ("hidden", "n_layers", "pooling", "dropout", "use_bond_features")})
-    info = fit(model, graphs["train"], graphs["val"], cfg, seed, pw)
-    export_predictions(model, graphs, out / f"{model_name}__{split}__seed{seed}.parquet")
-    log_dir.mkdir(parents=True, exist_ok=True)
     stem = f"{model_name}__{split}__seed{seed}"
+    info = fit(model, graphs["train"], graphs["val"], cfg, seed, pw, ckpt_dir=log_dir / "ckpt" / stem)
+    export_predictions(model, graphs, out / f"{stem}.parquet")
+    log_dir.mkdir(parents=True, exist_ok=True)
     (log_dir / f"{stem}.json").write_text(json.dumps(
         {"model": model_name, "split": split, "seed": seed, "config": cfg,
+         "early_stopping": {"metric": "val_mean_roc_auc", "patience": cfg["patience"],
+                            "max_epochs": cfg["max_epochs"]},
+         "versions": {"torch": torch.__version__},
          "pos_weight": None if pw is None else pw.tolist(), **info}, indent=1))
-    torch.save(model.state_dict(), log_dir / f"{stem}.pt")               # git-ignored (*.pt)
-    print(f"{stem}: best epoch {info['best_epoch']}, val mean PR-AUC {info['best_val_pr_auc']:.3f}",
-          flush=True)
+    torch.save(model.state_dict(), log_dir / f"{stem}.pt")               # best weights; git-ignored
+    plot_curves(info, (FIGURES if fig_dir is None else fig_dir) / f"{stem}_curve.png")
+    print(f"{stem}: best epoch {info['best_epoch']}, val mean ROC-AUC {info['best_val_roc_auc']:.3f}, "
+          f"PR-AUC {info['best_val_pr_auc']:.3f}", flush=True)
     return info
 
 
