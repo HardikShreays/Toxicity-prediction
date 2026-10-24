@@ -98,7 +98,7 @@ def test_config_matches_plan_b4():
         == (200, 25, 1e-3, 1e-5, 64)
 
 
-@pytest.mark.parametrize("name", ["gcn", "mpnn", "attentivefp"])
+@pytest.mark.parametrize("name", ["gcn", "mpnn", "afp"])
 def test_fit_runs_and_restores_best_val_epoch(name, graphs):
     torch.manual_seed(0)
     m = build_model(name, hidden=16, n_layers=2)
@@ -269,6 +269,18 @@ def test_run_writes_preds_log_checkpoints_and_curve(graphs, tmp_path):
     assert (tmp_path / "log" / "ckpt" / "gcn__demo__seed7" / "last.pt").exists()
     png = tmp_path / "fig" / "gcn__demo__seed7_curve.png"
     assert png.exists() and png.stat().st_size > 1000
+
+
+def test_run_names_files_with_the_afp_token_even_for_the_old_name(graphs, tmp_path):
+    cfg = dict(CFG, max_epochs=1)
+    run("attentivefp", "demo", 0, cfg, out=tmp_path / "p", log_dir=tmp_path / "l", graphs=graphs)
+    assert (tmp_path / "p" / "afp__demo__seed0.parquet").exists()
+    assert (tmp_path / "l" / "afp__demo__seed0.json").exists()
+    assert not list((tmp_path / "p").glob("attentivefp*"))
+
+
+def test_config_default_pooling_is_meanmax():
+    assert load_config()["pooling"] == "meanmax"
 
 
 def test_plot_curves_writes_png(tmp_path):

@@ -30,7 +30,7 @@ from torch_geometric.loader import DataLoader
 from tox.constants import CLEAN, CONFIGS, FIGURES, PREDS, RESULTS, SPLITS, TASKS
 from tox.featurize_graph import build_graphs
 from tox.metrics import score
-from tox.models_gnn import MODELS, build_model
+from tox.models_gnn import ALIASES, MODELS, build_model, canonical_name
 
 GNN_RESULTS = RESULTS / "gnn"                       # run logs / curves; checkpoints (*.pt) are git-ignored
 
@@ -244,6 +244,7 @@ def load_config(overrides: dict | None = None) -> dict:
 
 def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GNN_RESULTS,
         graphs=None, fig_dir=None) -> dict:
+    model_name = canonical_name(model_name)          # files always use the plan token, e.g. afp
     graphs = graphs or load_split_graphs(split)
     pw = None
     if cfg["pos_weight"]["enabled"]:
@@ -273,7 +274,7 @@ def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GN
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", choices=sorted(MODELS), required=True)
+    ap.add_argument("--model", choices=sorted(MODELS) + sorted(ALIASES), required=True)
     ap.add_argument("--split", required=True)
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, help="override max_epochs (smoke tests)")

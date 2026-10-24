@@ -1,7 +1,7 @@
 # B4 - GNN training defaults. Hyper-parameters are tuned on validation only; test is never used.
 hidden: 128
 n_layers: 3
-pooling: mean            # mean | sum | max (AttentiveFP has its own readout)
+pooling: meanmax         # plan B2: mean || max (ablation: mean | max | meanmax). AttentiveFP has its own readout
 dropout: 0.2
 use_bond_features: true
 lr: 0.001

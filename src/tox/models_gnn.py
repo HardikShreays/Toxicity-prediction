@@ -1,7 +1,7 @@
 """B2 - GNN architectures for 12-task Tox21 prediction.
 
 All models share one interface:
-    model = build_model(name, ...)        # name in {"gcn", "mpnn", "attentivefp"}
+    model = build_model(name, ...)        # name in {"gcn", "mpnn", "afp"} (plan tokens)
     logits = model(batch)                 # batch: PyG Batch -> [B, 12] raw logits (no sigmoid)
 
 Message passing in one sentence: each layer lets every atom update its vector from its bonded
@@ -16,13 +16,35 @@ from __future__ import annotations
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.nn import (AttentiveFP, GCNConv, GINEConv, global_add_pool,
-                                global_max_pool, global_mean_pool)
+from torch_geometric.nn import AttentiveFP, GCNConv, GINEConv, global_max_pool, global_mean_pool
 
 from tox.constants import TASKS
 from tox.featurize_graph import ATOM_DIM, BOND_DIM
 
-POOLS = {"mean": global_mean_pool, "sum": global_add_pool, "max": global_max_pool}
+POOLING_MODES = ("mean", "max", "meanmax")      # plan B2/B5: mean, max, and mean||max (the default)
+
+
+def _check_pooling(pooling: str) -> str:
+    if pooling not in POOLING_MODES:
+        raise ValueError(f"unknown pooling {pooling!r}; choose from {POOLING_MODES}")
+    return pooling
+
+
+def readout(h: torch.Tensor, batch_index: torch.Tensor, pooling: str) -> torch.Tensor:
+    """Graph readout: turn atom vectors [N, d] into molecule vectors [B, d] or [B, 2d].
+
+    'meanmax' concatenates the mean over atoms (overall composition) with the max over atoms
+    (strongest local signal, e.g. one toxicophore), giving 2d dimensions.
+    """
+    if pooling == "mean":
+        return global_mean_pool(h, batch_index)
+    if pooling == "max":
+        return global_max_pool(h, batch_index)
+    return torch.cat([global_mean_pool(h, batch_index), global_max_pool(h, batch_index)], dim=1)
+
+
+def pooled_dim(hidden: int, pooling: str) -> int:
+    return 2 * hidden if pooling == "meanmax" else hidden
 
 
 def _bond_input(batch, use_bond_features: bool) -> torch.Tensor:
@@ -32,9 +54,12 @@ def _bond_input(batch, use_bond_features: bool) -> torch.Tensor:
 
 
 class _Head(nn.Module):
-    def __init__(self, hidden: int, n_tasks: int, dropout: float):
+    """Prediction MLP: pooled vector -> hidden -> n_tasks. With the defaults (hidden 128,
+    mean||max pooling) this is the plan's 256 -> 128 -> 12."""
+
+    def __init__(self, in_dim: int, hidden: int, n_tasks: int, dropout: float):
         super().__init__()
-        self.net = nn.Sequential(nn.Linear(hidden, hidden), nn.ReLU(),
+        self.net = nn.Sequential(nn.Linear(in_dim, hidden), nn.ReLU(),
                                  nn.Dropout(dropout), nn.Linear(hidden, n_tasks))
 
     def forward(self, h):
@@ -45,20 +70,20 @@ class GCN(nn.Module):
     """Kipf & Welling GCN: neighbour average with symmetric degree normalisation.
     Atom features only - GCNConv has no place for bond features, so use_bond_features is ignored."""
 
-    def __init__(self, in_dim=ATOM_DIM, hidden=128, n_layers=3, pooling="mean",
+    def __init__(self, in_dim=ATOM_DIM, hidden=128, n_layers=3, pooling="meanmax",
                  dropout=0.2, n_tasks=len(TASKS), **_):
         super().__init__()
         dims = [in_dim] + [hidden] * n_layers
         self.convs = nn.ModuleList(GCNConv(a, b) for a, b in zip(dims[:-1], dims[1:]))
         self.norms = nn.ModuleList(nn.BatchNorm1d(hidden) for _ in range(n_layers))
-        self.pool, self.dropout = POOLS[pooling], dropout
-        self.head = _Head(hidden, n_tasks, dropout)
+        self.pooling, self.dropout = _check_pooling(pooling), dropout
+        self.head = _Head(pooled_dim(hidden, pooling), hidden, n_tasks, dropout)
 
     def forward(self, batch):
         h = batch.x
         for conv, norm in zip(self.convs, self.norms):
             h = F.dropout(F.relu(norm(conv(h, batch.edge_index))), self.dropout, self.training)
-        return self.head(self.pool(h, batch.batch))
+        return self.head(readout(h, batch.batch, self.pooling))
 
 
 class MPNN(nn.Module):
@@ -66,7 +91,7 @@ class MPNN(nn.Module):
     h_i' = MLP((1+eps) h_i + sum_j ReLU(h_j + W e_ij)). Residual connections after layer 1."""
 
     def __init__(self, in_dim=ATOM_DIM, edge_dim=BOND_DIM, hidden=128, n_layers=3,
-                 pooling="mean", dropout=0.2, use_bond_features=True,
+                 pooling="meanmax", dropout=0.2, use_bond_features=True,
                  n_tasks=len(TASKS), **_):
         super().__init__()
         self.use_bond_features = use_bond_features
@@ -75,8 +100,8 @@ class MPNN(nn.Module):
             GINEConv(nn.Sequential(nn.Linear(hidden, hidden), nn.ReLU(), nn.Linear(hidden, hidden)),
                      edge_dim=edge_dim, train_eps=True) for _ in range(n_layers))
         self.norms = nn.ModuleList(nn.BatchNorm1d(hidden) for _ in range(n_layers))
-        self.pool, self.dropout = POOLS[pooling], dropout
-        self.head = _Head(hidden, n_tasks, dropout)
+        self.pooling, self.dropout = _check_pooling(pooling), dropout
+        self.head = _Head(pooled_dim(hidden, pooling), hidden, n_tasks, dropout)
 
     def forward(self, batch):
         e = _bond_input(batch, self.use_bond_features)
@@ -84,7 +109,7 @@ class MPNN(nn.Module):
         for conv, norm in zip(self.convs, self.norms):
             h_new = F.relu(norm(conv(h, batch.edge_index, e)))
             h = F.dropout(h + h_new, self.dropout, self.training)    # residual
-        return self.head(self.pool(h, batch.batch))
+        return self.head(readout(h, batch.batch, self.pooling))
 
 
 class AttentiveFPNet(nn.Module):
@@ -103,10 +128,17 @@ class AttentiveFPNet(nn.Module):
         return self.net(batch.x, batch.edge_index, e, batch.batch)
 
 
-MODELS = {"gcn": GCN, "mpnn": MPNN, "attentivefp": AttentiveFPNet}
+MODELS = {"gcn": GCN, "mpnn": MPNN, "afp": AttentiveFPNet}     # keys are the C3 filename tokens (plan p. 5)
+ALIASES = {"attentivefp": "afp"}                                 # earlier name, still accepted
+
+
+def canonical_name(name: str) -> str:
+    """Map an accepted alias to the plan's model token (used in C3/C4 file names)."""
+    return ALIASES.get(name, name)
 
 
 def build_model(name: str, **kwargs) -> nn.Module:
+    name = canonical_name(name)
     if name not in MODELS:
         raise ValueError(f"unknown model {name!r}; choose from {sorted(MODELS)}")
     return MODELS[name](**kwargs)
