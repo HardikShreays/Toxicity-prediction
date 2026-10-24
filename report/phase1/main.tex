@@ -141,6 +141,22 @@ descriptors only & 0.761$\pm$0.001 & 0.402$\pm$0.003 \\
 
 \textbf{Per endpoint.} For the selected random forest on \texttt{scaffold\_det}, ROC-AUC ranges from 0.692 (NR-ER) to 0.866 (SR-MMP). The weakest PR-AUC is SR-ATAD5 (0.229, at a positive rate of 0.051), which is still 4.5$\times$ its random baseline.
 
+\textbf{Feature importance.} We inspect XGBoost gain on \texttt{scaffold\_det} (FP+descriptors). Whole-molecule descriptors take between 35\% (NR-AR) and 72\% (SR-HSE) of the total gain per endpoint (Fig.~\ref{fig:share}), in line with descriptors outperforming fingerprints on unseen scaffolds. The leading features are chemically plausible: NR-AhR is led by \texttt{fr\_benzene} and aromatic-ring counts, consistent with planar polyaromatic AhR ligands, and SR-MMP by \texttt{fr\_benzene} and \texttt{fr\_phenol}. SR-p53 and SR-HSE rely on size and surface-area descriptors rather than specific groups. Mapping the top fingerprint bits back to substructures (Fig.~\ref{fig:bits}) shows that for NR-AhR the highest-gain bits are generic low-radius aromatic environments present in thousands of molecules, not specific toxicophores; since a bit can also hide several colliding substructures, we treat these as hints rather than mechanisms.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{importance_gain_share.png}
+\caption{Share of XGBoost gain from Morgan bits versus RDKit descriptors, per endpoint.}
+\label{fig:share}
+\end{figure}
+
+\begin{figure*}[t]
+\centering
+\includegraphics[width=\textwidth]{importance_bits_NR-AhR.png}
+\caption{Top-10 Morgan bits for NR-AhR by gain, with the highlighted environment in an example molecule (radius $r$ and number of molecules containing the bit shown).}
+\label{fig:bits}
+\end{figure*}
+
 \section{Limitations}
 Tox21 assays are in-vitro screens of pathway activity, not measurements of whole-organism toxicity. The labels are noisy: we found conflicting duplicate measurements, and some endpoints have only a few hundred positives, so per-endpoint scores on a 770-molecule test set move noticeably between seeds. A scaffold split is harder than a random one, but it is still a retrospective split of one dataset rather than true prospective validation. Finally, stereochemistry and charges were kept as given, so stereoisomers count as separate molecules; this is a deliberate choice but a different convention would change the duplicate counts slightly.
 

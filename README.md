@@ -60,8 +60,9 @@ src/tox/
   ablate_fp.py      radius / length / descriptors-only ablation
   metrics.py        the only scorer (masked ROC-AUC / PR-AUC)          -> C4
   aggregate.py      summary.csv, headline.csv, README table
+  analysis/         importance.py (gain -> substructures, figures), make_slides_phase1.py
 notebooks/          01_eda, 02_aml
-report/phase1/      IEEEtran LaTeX report
+report/phase1/      IEEEtran LaTeX report, slides.pptx (built by analysis/make_slides_phase1.py)
 ```
 
 ## Data contracts
