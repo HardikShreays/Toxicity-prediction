@@ -4,7 +4,7 @@ import torch
 from torch_geometric.data import Batch
 
 from tox.constants import TASKS
-from tox.featurize_graph import (ATOM_DIM, BOND_DIM, build_graphs, smiles_to_graph)
+from tox.featurize_graph import (ATOM_DIM, ATOMS, BOND_DIM, build_graphs, smiles_to_graph)
 
 
 def test_ethanol_shapes_and_dtypes():
@@ -31,7 +31,6 @@ def test_onehot_blocks_are_valid():
     assert torch.isfinite(g.x).all() and torch.isfinite(g.edge_attr).all()
     assert set(g.x.unique().tolist()) <= {0.0, 1.0}
     # first block is the atomic-number one-hot: exactly one hot entry per atom
-    from tox.featurize_graph import ATOMS
     assert (g.x[:, : len(ATOMS) + 1].sum(1) == 1).all()
 
 
@@ -45,7 +44,6 @@ def test_features_distinguish_chemistry():
 
 
 def test_unknown_element_goes_to_other_bucket():
-    from tox.featurize_graph import ATOMS
     g = smiles_to_graph("[Pt]")
     assert g.x[0, len(ATOMS)] == 1.0
 
@@ -98,3 +96,71 @@ def test_real_split_smiles_all_parse():
     d = json.loads((SPLITS / "scaffold_det.json").read_text())
     smiles = d["train"][:300] + d["val"][:100] + d["test"][:100]
     assert len(build_graphs(smiles)) == len(smiles)
+
+
+# ---- exact plan schema (B1, p. 14) --------------------------------------------------------
+
+def test_dimensions_are_exactly_the_plan_schema():
+    # atomic number 12+other, degree 0-5, charge {-1,0,+1,other}, hybridization 5+other,
+    # aromatic, total Hs 0-4, in ring
+    assert ATOM_DIM == 13 + 6 + 4 + 6 + 1 + 5 + 1 == 36
+    assert BOND_DIM == 4 + 1 + 1 == 6                       # type, conjugated, in ring
+    assert ATOMS == [6, 7, 8, 9, 15, 16, 17, 35, 53, 5, 14, 34]
+
+
+def _hot(row, lo, hi):
+    return row[lo:hi].nonzero().flatten().tolist()
+
+
+def test_aromatic_carbon_feature_layout():
+    x = smiles_to_graph("c1ccccc1").x[0]                   # aromatic CH: degree 2, 1 H, SP2, ring
+    assert _hot(x, 0, 13) == [0]                            # carbon = first atomic-number slot
+    assert _hot(x, 13, 19) == [2]                           # degree 2
+    assert _hot(x, 19, 23) == [1]                           # formal charge 0 -> middle slot
+    assert _hot(x, 23, 29) == [1]                           # SP2
+    assert x[29] == 1.0                                     # aromatic
+    assert _hot(x, 30, 35) == [1]                           # total Hs = 1
+    assert x[35] == 1.0                                     # in ring
+
+
+def test_bond_feature_layout():
+    g = smiles_to_graph("C=CC#N")                           # double (conjugated, no ring), single, triple
+    types = {tuple(r[:4].tolist()) for r in g.edge_attr}
+    assert types == {(0, 1, 0, 0), (1, 0, 0, 0), (0, 0, 1, 0)}
+    ring = smiles_to_graph("c1ccccc1").edge_attr[0]
+    assert ring.tolist() == [0, 0, 0, 1, 1, 1]              # aromatic, conjugated, in ring
+    chain = smiles_to_graph("CC").edge_attr[0]
+    assert chain.tolist() == [1, 0, 0, 0, 0, 0]
+
+
+def test_charge_other_and_hybridization_other_slots():
+    x = smiles_to_graph("[Zn+2]").x[0]                      # charge +2; RDKit hybridization 'S'
+    assert _hot(x, 19, 23) == [3]                           # charge 'other'
+    assert _hot(x, 23, 29) == [5]                           # hybridization 'other'
+    assert _hot(smiles_to_graph("CC(=O)[O-]").x[3], 19, 23) == [0]     # -1
+    assert _hot(smiles_to_graph("C[NH3+]").x[1], 19, 23) == [2]        # +1
+
+
+def test_degree_above_five_has_no_slot_so_block_is_zero():
+    x = smiles_to_graph("FS(F)(F)(F)(F)F").x                # sulfur hexafluoride: S has degree 6
+    s = x[1]
+    assert s[13:19].sum() == 0
+    assert _hot(s, 23, 29) == [4]                           # SP3D2 is a planned hybridization
+
+
+def test_chirality_and_double_bond_stereo_are_not_encoded():
+    a, b = smiles_to_graph("C[C@H](N)O"), smiles_to_graph("C[C@@H](N)O")
+    assert torch.equal(a.x, b.x) and torch.equal(a.edge_attr, b.edge_attr)
+    e, z = smiles_to_graph("C/C=C/C"), smiles_to_graph("C/C=C\\C")
+    assert torch.equal(e.edge_attr, z.edge_attr)
+
+
+def test_whole_clean_dataset_featurizes_to_planned_dims():
+    from tox.constants import CLEAN
+    if not CLEAN.exists():
+        pytest.skip("C1 not built")
+    import pandas as pd
+    smiles = pd.read_parquet(CLEAN).smiles.tolist()[:1500]
+    for g in build_graphs(smiles):
+        assert g.x.shape[1] == 36 and g.edge_attr.shape[1] == 6
+        assert set(g.x.unique().tolist()) <= {0.0, 1.0}

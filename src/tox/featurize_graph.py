@@ -1,9 +1,9 @@
 """B1 - standardized SMILES -> PyTorch Geometric molecular graphs.
 
 Graph schema (one `torch_geometric.data.Data` per molecule):
-    x           [N, ATOM_DIM]  float32  atom features (one-hot / flags, see below)
+    x           [N, 36]        float32  atom features (ATOM_DIM, see the schema below)
     edge_index  [2, 2E]        int64    every undirected bond appears in BOTH directions
-    edge_attr   [2E, BOND_DIM] float32  bond features, identical for the two directions
+    edge_attr   [2E, 6]        float32  bond features (BOND_DIM), identical for both directions
     y           [1, 12]        float32  labels in `TASKS` order, NaN = not measured
 
 `y` has a leading dimension of 1 on purpose: PyG concatenates it along dim 0 when
@@ -24,42 +24,48 @@ from tox.constants import TASKS
 
 RDLogger.DisableLog("rdApp.*")
 
-# --- feature vocabularies. The last slot of every one-hot is an "other / unknown" bucket.
-ATOMS = [6, 7, 8, 9, 15, 16, 17, 35, 53, 5, 14, 11, 19, 3, 12, 20, 26, 29, 30, 34, 50, 33, 80, 82]
+# --- Feature schema: EXACTLY the one in the team plan (B1, p. 14). Nothing else is encoded.
+# Atom (36 dims): atomic number (12 + other) | degree 0-5 | formal charge {-1,0,+1,other} |
+#   hybridization {SP,SP2,SP3,SP3D,SP3D2,other} | aromatic | total Hs 0-4 | in ring.
+# Bond (6 dims): type {single,double,triple,aromatic} | conjugated | in ring.
+# The plan defines an "other" slot only for atomic number, charge and hybridization. A degree
+# above 5, more than 4 Hs, or a bond type outside the four has no slot, so its one-hot block is
+# all zeros (in the Tox21 clean set that is 1 atom for degree and 1 atom for Hs, and no bonds).
+# Chirality and bond stereo are deliberately NOT encoded: the plan does not list them.
+ATOMS = [6, 7, 8, 9, 15, 16, 17, 35, 53, 5, 14, 34]
 DEGREES = [0, 1, 2, 3, 4, 5]
-CHARGES = [-2, -1, 0, 1, 2]
+CHARGES = [-1, 0, 1]
 NUM_HS = [0, 1, 2, 3, 4]
-HYBRIDIZATIONS = [Chem.HybridizationType.S, Chem.HybridizationType.SP,
-                  Chem.HybridizationType.SP2, Chem.HybridizationType.SP3,
-                  Chem.HybridizationType.SP3D, Chem.HybridizationType.SP3D2]
-CHIRALITY = [Chem.ChiralType.CHI_UNSPECIFIED, Chem.ChiralType.CHI_TETRAHEDRAL_CW,
-             Chem.ChiralType.CHI_TETRAHEDRAL_CCW]
+HYBRIDIZATIONS = [Chem.HybridizationType.SP, Chem.HybridizationType.SP2,
+                  Chem.HybridizationType.SP3, Chem.HybridizationType.SP3D,
+                  Chem.HybridizationType.SP3D2]
 BOND_TYPES = [Chem.BondType.SINGLE, Chem.BondType.DOUBLE, Chem.BondType.TRIPLE,
               Chem.BondType.AROMATIC]
-BOND_STEREO = [Chem.BondStereo.STEREONONE, Chem.BondStereo.STEREOZ, Chem.BondStereo.STEREOE,
-               Chem.BondStereo.STEREOCIS, Chem.BondStereo.STEREOTRANS]
 
 
-def _onehot(value, choices) -> list[float]:
-    """One-hot over `choices` plus a trailing 'other' slot for unseen values."""
-    out = [0.0] * (len(choices) + 1)
-    out[choices.index(value) if value in choices else len(choices)] = 1.0
+def _onehot(value, choices, other: bool) -> list[float]:
+    """One-hot over `choices`; with other=True a trailing slot catches unseen values,
+    otherwise an unseen value gives all zeros."""
+    out = [0.0] * (len(choices) + int(other))
+    if value in choices:
+        out[choices.index(value)] = 1.0
+    elif other:
+        out[-1] = 1.0
     return out
 
 
 def atom_features(atom: Chem.Atom) -> list[float]:
-    return (_onehot(atom.GetAtomicNum(), ATOMS)
-            + _onehot(atom.GetDegree(), DEGREES)
-            + _onehot(atom.GetFormalCharge(), CHARGES)
-            + _onehot(atom.GetTotalNumHs(), NUM_HS)
-            + _onehot(atom.GetHybridization(), HYBRIDIZATIONS)
-            + _onehot(atom.GetChiralTag(), CHIRALITY)
-            + [float(atom.GetIsAromatic()), float(atom.IsInRing())])
+    return (_onehot(atom.GetAtomicNum(), ATOMS, other=True)
+            + _onehot(atom.GetDegree(), DEGREES, other=False)
+            + _onehot(atom.GetFormalCharge(), CHARGES, other=True)
+            + _onehot(atom.GetHybridization(), HYBRIDIZATIONS, other=True)
+            + [float(atom.GetIsAromatic())]
+            + _onehot(atom.GetTotalNumHs(), NUM_HS, other=False)
+            + [float(atom.IsInRing())])
 
 
 def bond_features(bond: Chem.Bond) -> list[float]:
-    return (_onehot(bond.GetBondType(), BOND_TYPES)
-            + _onehot(bond.GetStereo(), BOND_STEREO)
+    return (_onehot(bond.GetBondType(), BOND_TYPES, other=False)
             + [float(bond.GetIsConjugated()), float(bond.IsInRing())])
 
 
