@@ -28,8 +28,11 @@ from tox.models_gnn import MODELS, build_model
 GNN_RESULTS = RESULTS / "gnn"                       # run logs / curves; checkpoints (*.pt) are git-ignored
 
 
-def masked_bce_with_logits(logits: torch.Tensor, y: torch.Tensor,
-                           pos_weight: torch.Tensor | None = None) -> torch.Tensor:
+POS_WEIGHT_CAP = 30.0            # plan B3: pos_weight is clipped at 30 for stability
+
+
+def masked_bce(logits: torch.Tensor, y: torch.Tensor,
+               pos_weight: torch.Tensor | None = None) -> torch.Tensor:
     """Multi-task binary cross-entropy that ignores missing labels.
 
     logits: [B, T] raw scores.  y: [B, T] with 1.0 / 0.0 / NaN (NaN = not measured).
@@ -55,11 +58,16 @@ def masked_bce_with_logits(logits: torch.Tensor, y: torch.Tensor,
     return per_entry.sum() / n
 
 
-def compute_pos_weight(y_train: np.ndarray, clip_min: float, clip_max: float) -> torch.Tensor:
-    """Per-task weight n_neg / n_pos from TRAINING labels only (NaN ignored), clipped.
+masked_bce_with_logits = masked_bce   # earlier name (B3 first version); kept for existing callers
 
-    Tasks with no positives get weight 1 before clipping. The clip bounds must be supplied
-    explicitly (they come from the project plan, not from this function).
+
+def compute_pos_weight(y_train: np.ndarray, clip_max: float = POS_WEIGHT_CAP,
+                       clip_min: float | None = None) -> torch.Tensor:
+    """Plan B3: pos_weight[j] = n_neg / n_pos for task j, from TRAINING labels only, capped at 30.
+
+    NaN labels are ignored in both counts. Only an upper cap is specified by the plan, so
+    clip_min defaults to None (no lower bound). A task with no positive training labels gets
+    weight 1.0 (neutral); the plan does not cover this case.
     """
     pos = np.nansum(y_train == 1, axis=0).astype(float)
     neg = np.nansum(y_train == 0, axis=0).astype(float)
@@ -107,7 +115,7 @@ def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None) 
         losses = []
         for b in loader:
             opt.zero_grad()
-            loss = masked_bce_with_logits(model(b), b.y, pos_weight)
+            loss = masked_bce(model(b), b.y, pos_weight)
             loss.backward()
             opt.step()
             losses.append(loss.item())
@@ -156,10 +164,10 @@ def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GN
     graphs = graphs or load_split_graphs(split)
     pw = None
     if cfg["pos_weight"]["enabled"]:
-        lo, hi = cfg["pos_weight"]["clip_min"], cfg["pos_weight"]["clip_max"]
-        if lo is None or hi is None:
-            raise ValueError("pos_weight.enabled needs clip_min and clip_max from the project plan")
-        pw = compute_pos_weight(labels_of(graphs["train"]), lo, hi)      # train labels only
+        hi = cfg["pos_weight"].get("clip_max")
+        if hi is None:
+            raise ValueError("pos_weight.enabled needs clip_max (the plan specifies 30)")
+        pw = compute_pos_weight(labels_of(graphs["train"]), clip_max=hi)  # train labels only
     set_seed(seed)
     model = build_model(model_name, **{k: cfg[k] for k in
                         ("hidden", "n_layers", "pooling", "dropout", "use_bond_features")})

@@ -32,22 +32,50 @@ def graphs():
 CFG = dict(load_config(), hidden=16, n_layers=2, batch_size=4, max_epochs=6, patience=3)
 
 
-def test_config_records_pos_weight_off_by_default():
-    assert load_config()["pos_weight"]["enabled"] is False
+def test_config_enables_pos_weight_capped_at_30_by_default():
+    pw = load_config()["pos_weight"]
+    assert pw["enabled"] is True and pw["clip_max"] == 30
 
 
-def test_compute_pos_weight_uses_given_labels_and_clips():
-    y = np.array([[1, 0, np.nan], [0, 0, np.nan], [0, 0, np.nan], [0, 1, np.nan]], dtype=np.float32)
-    w = compute_pos_weight(y, clip_min=1.0, clip_max=2.5)
-    # tasks 0,1: 3 neg / 1 pos = 3 -> clipped to 2.5; task 2 has no labels -> 1
-    assert w.tolist() == pytest.approx([2.5, 2.5, 1.0])
-    assert compute_pos_weight(y, 1.0, 10.0).tolist() == pytest.approx([3.0, 3.0, 1.0])
+def test_compute_pos_weight_ratio_cap_and_nan_handling():
+    # task0: 3 neg / 1 pos = 3; task1: 90 neg / 1 pos = 90 -> capped at 30; task2: no labels -> 1
+    y = np.full((91, 3), np.nan, dtype=np.float32)
+    y[:4, 0] = [1, 0, 0, 0]
+    y[:, 1] = 0.0
+    y[0, 1] = 1.0
+    w = compute_pos_weight(y)                              # default cap = 30
+    assert w.tolist() == pytest.approx([3.0, 30.0, 1.0])
+    assert compute_pos_weight(y, clip_max=2.5).tolist() == pytest.approx([2.5, 2.5, 1.0])
+    assert compute_pos_weight(y, clip_max=100.0)[1].item() == pytest.approx(90.0)
+
+
+def test_pos_weight_uses_training_labels_only(graphs, tmp_path):
+    """Scrambling val/test labels must not change the logged pos_weight; scrambling train must."""
+    import json
+    cfg = dict(CFG, max_epochs=1)
+    flipped = lambda gs: build_graphs([g.smiles for g in gs], 1 - np.nan_to_num(labels_of(gs)))
+    other = dict(graphs, val=flipped(graphs["val"]), test=flipped(graphs["test"]))
+    run("gcn", "d", 0, cfg, out=tmp_path / "a", log_dir=tmp_path / "a", graphs=graphs)
+    run("gcn", "d", 0, cfg, out=tmp_path / "b", log_dir=tmp_path / "b", graphs=other)
+    pa = json.loads((tmp_path / "a" / "gcn__d__seed0.json").read_text())["pos_weight"]
+    pb = json.loads((tmp_path / "b" / "gcn__d__seed0.json").read_text())["pos_weight"]
+    assert pa == pb == compute_pos_weight(labels_of(graphs["train"])).tolist()
+    changed = dict(graphs, train=flipped(graphs["train"]))
+    run("gcn", "d", 0, cfg, out=tmp_path / "c", log_dir=tmp_path / "c", graphs=changed)
+    assert json.loads((tmp_path / "c" / "gcn__d__seed0.json").read_text())["pos_weight"] != pa
 
 
 def test_pos_weight_enabled_without_clip_raises(graphs):
-    cfg = dict(CFG, pos_weight={"enabled": True, "clip_min": None, "clip_max": None})
-    with pytest.raises(ValueError, match="clip"):
+    cfg = dict(CFG, pos_weight={"enabled": True, "clip_max": None})
+    with pytest.raises(ValueError, match="clip_max"):
         run("gcn", "x", 0, cfg, graphs=graphs)
+
+
+def test_pos_weight_off_logs_none(graphs, tmp_path):
+    import json
+    cfg = dict(CFG, max_epochs=1, pos_weight={"enabled": False, "clip_max": 30})
+    run("gcn", "d", 0, cfg, out=tmp_path, log_dir=tmp_path, graphs=graphs)
+    assert json.loads((tmp_path / "gcn__d__seed0.json").read_text())["pos_weight"] is None
 
 
 @pytest.mark.parametrize("name", ["gcn", "mpnn", "attentivefp"])

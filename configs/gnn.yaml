@@ -9,7 +9,6 @@ weight_decay: 0.00001
 batch_size: 64
 max_epochs: 100
 patience: 15             # early stopping on val mean PR-AUC (assumption: plan's exact policy not in repo)
-pos_weight:
-  enabled: false         # off until the plan's clipping rule is confirmed
-  clip_min: null         # REQUIRED when enabled - must come from the plan, not guessed
-  clip_max: null
+pos_weight:              # plan B3: n_neg / n_pos per task from train labels, clipped at 30
+  enabled: true          # the pos_weight on/off ablation (B5) turns this off
+  clip_max: 30
