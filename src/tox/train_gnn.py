@@ -27,9 +27,9 @@ import torch.nn.functional as F
 import yaml
 from torch_geometric.loader import DataLoader
 
-from tox.constants import CLEAN, CONFIGS, FIGURES, PREDS, RESULTS, SEEDS, SPLITS, TASKS
+from tox.constants import CLEAN, CONFIGS, FIGURES, METRICS, PREDS, RESULTS, SEEDS, SPLITS, TASKS
 from tox.featurize_graph import build_graphs
-from tox.metrics import score
+from tox.metrics import load_preds, score
 from tox.models_gnn import ALIASES, MODELS, build_model, canonical_name
 
 GNN_RESULTS = RESULTS / "gnn"                       # run logs / curves; checkpoints (*.pt) are git-ignored
@@ -357,6 +357,28 @@ def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GN
     return info
 
 
+def score_preds(preds_dir=None, out_dir=None, role: str = "test", tokens=None) -> list:
+    """Score GNN C3 files into C4 files with the SHARED scorer (tox.metrics.load_preds + score).
+
+    Same result as `python -m tox.metrics`, but restricted to files whose model token is in
+    `tokens` (default: gcn, mpnn, afp), so teammates' files sharing results/preds/ are never
+    rescored or rewritten. role='val' gives validation scores (kept apart from the test C4).
+    """
+    preds_dir = PREDS if preds_dir is None else preds_dir
+    out_dir = METRICS if out_dir is None else out_dir
+    tokens = set(MODELS) if tokens is None else set(tokens)
+    labels = pd.read_parquet(CLEAN).set_index("smiles")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    done = []
+    for f in sorted(preds_dir.glob("*.parquet")):
+        if f.stem.split("__")[0] not in tokens:
+            continue
+        y, p = load_preds(f, role, labels)
+        score(y, p).to_csv(out_dir / f"{f.stem}.csv", index=False)
+        done.append(f.stem)
+    return done
+
+
 def main():
     ap = argparse.ArgumentParser(description="Train one GNN run, or the whole frozen grid (--grid).")
     ap.add_argument("--model", choices=sorted(MODELS) + sorted(ALIASES))
@@ -366,8 +388,13 @@ def main():
     ap.add_argument("--grid", action="store_true", help="all RUNS for --models with tuned params")
     ap.add_argument("--models", nargs="+", default=sorted(MODELS))
     ap.add_argument("--force", action="store_true")
+    ap.add_argument("--score", action="store_true",
+                    help="score the GNN C3 files with the shared scorer (test role -> results/metrics)")
     args = ap.parse_args()
-    if args.grid:
+    if args.score:
+        done = score_preds(tokens=[canonical_name(m) for m in args.models])
+        print(f"scored {len(done)} GNN files (test) -> {METRICS}")
+    elif args.grid:
         run_grid(args.models, force=args.force, max_epochs=args.epochs)
     else:
         if not (args.model and args.split):

@@ -299,3 +299,30 @@ def test_real_splits_are_disjoint_and_cover_c1_labels():
     r = {k: set(sp[k]) for k in ("train", "val", "test")}
     assert not (r["train"] & r["val"] or r["train"] & r["test"] or r["val"] & r["test"])
     assert (r["train"] | r["val"] | r["test"]) <= set(pd.read_parquet(CLEAN).smiles)
+
+
+def test_score_preds_matches_shared_scorer_and_only_touches_gnn_tokens(tmp_path):
+    import json
+    from tox.constants import CLEAN, SPLITS
+    from tox.metrics import load_preds
+    from tox.train_gnn import score_preds, write_c3
+    if not CLEAN.exists():
+        pytest.skip("C1 not built")
+    sp = json.loads((SPLITS / "scaffold_det.json").read_text())
+    smiles = {"val": sp["val"][:40], "test": sp["test"][:40]}
+    labels = pd.read_parquet(CLEAN).set_index("smiles")[TASKS]
+    gs = {r: build_graphs(smiles[r], labels.loc[smiles[r]].to_numpy(dtype=np.float32)) for r in smiles}
+    rng = np.random.default_rng(0)
+    probs = {r: rng.random((40, 12)) for r in smiles}
+    pdir = tmp_path / "preds"
+    write_c3(gs, probs, pdir / "gcn__scaffold_det__seed0.parquet")
+    write_c3(gs, probs, pdir / "lr_fp__scaffold_det__seed0.parquet")           # a teammate's token
+    done = score_preds(pdir, tmp_path / "m")
+    assert done == ["gcn__scaffold_det__seed0"]                                # lr_fp untouched
+    got = pd.read_csv(tmp_path / "m" / "gcn__scaffold_det__seed0.csv")
+    y, p = load_preds(pdir / "gcn__scaffold_det__seed0.parquet", "test", pd.read_parquet(CLEAN).set_index("smiles"))
+    want = score(y, p)
+    pd.testing.assert_frame_equal(got, want, check_dtype=False)
+    assert list(got.columns) == ["task", "n", "n_pos", "pos_rate", "roc_auc", "pr_auc"]
+    score_preds(pdir, tmp_path / "v", role="val", tokens=["gcn"])
+    assert (tmp_path / "v" / "gcn__scaffold_det__seed0.csv").exists()
