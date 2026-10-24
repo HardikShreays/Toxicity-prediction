@@ -3,6 +3,7 @@
     python -m tox.ablate_gnn --model mpnn                 # all applicable ablations
     python -m tox.ablate_gnn --model mpnn --groups layers bond
     python -m tox.metrics --preds results/ablations/gnn/preds --out results/ablations/gnn/metrics --role test
+    python -m tox.ablate_gnn --model mpnn --summary       # -> summary.csv and per_task.csv
 
 The five ablations and the file tokens they write (baseline = the main run `{model}` from
 `python -m tox.train_gnn --grid`, so a pair is e.g. mpnn vs mpnn-noedge as in the plan):
@@ -28,10 +29,13 @@ import argparse
 import copy
 import json
 
+import re
+
 import numpy as np
+import pandas as pd
 import torch
 
-from tox.constants import ABLATIONS, SEEDS, TASKS
+from tox.constants import ABLATIONS, METRICS, SEEDS, TASKS
 from tox.models_gnn import build_model, canonical_name
 from tox.train_gnn import (fit, frozen_config, load_split_graphs, make_pos_weight, predict_probs,
                            run, set_seed, write_c3)
@@ -133,6 +137,64 @@ def run_ablations(model: str, groups=None, seeds=SEEDS, force: bool = False, out
     return done
 
 
+SUFFIX_GROUPS = [(r"-l\d+$", "layers"), (r"-noedge$", "bond"), (r"-p(mean|max)$", "pooling"),
+                 (r"-nopw$", "posweight"), (r"-single$", "single")]
+
+
+def group_of(tag: str, model: str) -> str:
+    """Ablation group of a file token; the main run `{model}` itself is the 'baseline' arm."""
+    if tag == model:
+        return "baseline"
+    for pattern, group in SUFFIX_GROUPS:
+        if re.search(pattern, tag):
+            return group
+    raise ValueError(f"{tag!r} is not a {model} ablation token")
+
+
+def _read_c4(model: str, metrics_dir=None, baseline_dir=None) -> pd.DataFrame:
+    """Scored (C4) files for the ablation variants plus the baseline arm, scaffold_det only.
+    Baseline = the main `{model}` runs already scored in results/metrics (written by tox.metrics)."""
+    model = canonical_name(model)
+    metrics_dir = OUT / "metrics" if metrics_dir is None else metrics_dir
+    baseline_dir = METRICS if baseline_dir is None else baseline_dir
+    files = sorted(metrics_dir.glob(f"{model}-*__{SPLIT}__seed*.csv")) \
+        + sorted(baseline_dir.glob(f"{model}__{SPLIT}__seed*.csv"))
+    if not files:
+        raise FileNotFoundError(f"no scored {model} ablation files in {metrics_dir}; run tox.metrics first")
+    frames = []
+    for f in files:
+        tag, split, seed = f.stem.split("__")
+        frames.append(pd.read_csv(f).assign(variant=tag, group=group_of(tag, model), seed=int(seed[4:])))
+    return pd.concat(frames, ignore_index=True)
+
+
+def summarize(model: str, metrics_dir=None, baseline_dir=None) -> pd.DataFrame:
+    """One row per variant: 12-task mean per seed, then mean/std over seeds (the headline.csv recipe,
+    so numbers are comparable to the main table). n_runs shows how many seeds were available."""
+    df = _read_c4(model, metrics_dir, baseline_dir)
+    per_run = df.groupby(["group", "variant", "seed"], sort=False)[["roc_auc", "pr_auc", "pos_rate"]].mean()
+    out = (per_run.groupby(["group", "variant"], sort=False)
+                  .agg(n_runs=("roc_auc", "size"),
+                       roc_auc_mean=("roc_auc", "mean"), roc_auc_std=("roc_auc", "std"),
+                       pr_auc_mean=("pr_auc", "mean"), pr_auc_std=("pr_auc", "std"),
+                       pos_rate=("pos_rate", "mean"))
+                  .reset_index())
+    order = {g: i for i, g in enumerate(["baseline", *GROUPS])}
+    return out.sort_values(["group", "variant"], key=lambda c: c.map(order) if c.name == "group" else c,
+                           ignore_index=True)
+
+
+def per_task_summary(model: str, metrics_dir=None, baseline_dir=None) -> pd.DataFrame:
+    """Per endpoint and variant: seed-mean ROC/PR-AUC plus the endpoint's positive rate and count
+    (to see whether label sharing helps the sparse endpoints, single vs baseline multi-task)."""
+    df = _read_c4(model, metrics_dir, baseline_dir)
+    return (df.groupby(["group", "variant", "task"], sort=False)
+              .agg(n_runs=("seed", "nunique"), n_pos=("n_pos", "mean"), pos_rate=("pos_rate", "mean"),
+                   roc_auc_mean=("roc_auc", "mean"), roc_auc_std=("roc_auc", "std"),
+                   pr_auc_mean=("pr_auc", "mean"), pr_auc_std=("pr_auc", "std"))
+              .reset_index())
+
+
 def main():
     ap = argparse.ArgumentParser(description="GNN ablations on scaffold_det (plan B5).")
     ap.add_argument("--model", default="mpnn", help="architecture to ablate (default mpnn: ASSUMPTION)")
@@ -140,11 +202,18 @@ def main():
     ap.add_argument("--seeds", nargs="+", type=int, default=SEEDS)
     ap.add_argument("--force", action="store_true")
     ap.add_argument("--list", action="store_true", help="print the variants and exit")
+    ap.add_argument("--summary", action="store_true", help="roll the scored C4 files up into summary.csv / per_task.csv")
     ap.add_argument("--epochs", type=int, help="override max_epochs (smoke tests only)")
     a = ap.parse_args()
     if a.list:
         for tag, ov in variants(a.model, a.groups).items():
             print(f"{tag:22s} {ov}")
+        return
+    if a.summary:
+        summary = summarize(a.model)
+        summary.to_csv(OUT / "summary.csv", index=False)
+        per_task_summary(a.model).to_csv(OUT / "per_task.csv", index=False)
+        print(summary.round(3).to_string(index=False))
         return
     run_ablations(a.model, a.groups, a.seeds, a.force, max_epochs=a.epochs)
 

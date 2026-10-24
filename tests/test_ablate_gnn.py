@@ -168,3 +168,59 @@ def test_ablation_run_with_real_trainer_writes_tagged_c3_file(tmp_path):
         graphs=g, fig_dir=tmp_path / "f", tag="mpnn-noedge")
     assert (tmp_path / "p" / "mpnn-noedge__demo__seed0.parquet").exists()
     assert json.loads((tmp_path / "l" / "mpnn-noedge__demo__seed0.json").read_text())["tag"] == "mpnn-noedge"
+
+
+# ---------------- summary (rolls up C4 files written by tox.metrics) ----------------
+
+def _c4(path, roc, pr=None, n_pos=30, pos_rate=0.1):
+    pd.DataFrame({"task": TASKS, "n": 700, "n_pos": n_pos, "pos_rate": pos_rate,
+                  "roc_auc": roc, "pr_auc": roc / 2 if pr is None else pr}).to_csv(path, index=False)
+
+
+@pytest.fixture()
+def c4_dirs(tmp_path):
+    abl, base = tmp_path / "abl", tmp_path / "base"
+    abl.mkdir(); base.mkdir()
+    for s in range(3):
+        _c4(base / f"mpnn__scaffold_det__seed{s}.csv", 0.70 + 0.01 * s)
+        _c4(abl / f"mpnn-noedge__scaffold_det__seed{s}.csv", 0.60 + 0.01 * s)
+        _c4(abl / f"mpnn-l2__scaffold_det__seed{s}.csv", 0.65)
+    _c4(abl / "mpnn-single__scaffold_det__seed0.csv", np.linspace(0.5, 0.9, 12))
+    _c4(base / "gcn__scaffold_det__seed0.csv", 0.1)                      # other model: must be ignored
+    return abl, base
+
+
+def test_summary_has_baseline_and_variants_with_headline_recipe(c4_dirs):
+    from tox.ablate_gnn import summarize
+    abl, base = c4_dirs
+    s = summarize("mpnn", abl, base).set_index("variant")
+    assert s.loc["mpnn", "group"] == "baseline" and s.loc["mpnn-noedge", "group"] == "bond"
+    assert s.loc["mpnn-l2", "group"] == "layers" and s.loc["mpnn-single", "group"] == "single"
+    assert s.loc["mpnn", "n_runs"] == 3 and s.loc["mpnn-single", "n_runs"] == 1
+    assert s.loc["mpnn", "roc_auc_mean"] == pytest.approx(0.71)         # mean of per-seed 12-task means
+    assert s.loc["mpnn", "roc_auc_std"] == pytest.approx(np.std([0.70, 0.71, 0.72], ddof=1))
+    assert s.loc["mpnn-single", "roc_auc_mean"] == pytest.approx(np.linspace(0.5, 0.9, 12).mean())
+    assert "gcn" not in s.index and s.index[0] == "mpnn"                # baseline first
+
+
+def test_per_task_summary_one_row_per_variant_and_endpoint(c4_dirs):
+    from tox.ablate_gnn import per_task_summary
+    abl, base = c4_dirs
+    t = per_task_summary("mpnn", abl, base)
+    assert len(t) == 4 * 12 and set(t.task) == set(TASKS)
+    single = t[t.variant == "mpnn-single"].set_index("task")
+    assert single.loc[TASKS[0], "roc_auc_mean"] == pytest.approx(0.5)
+    assert single.loc[TASKS[-1], "roc_auc_mean"] == pytest.approx(0.9)
+    assert {"n_pos", "pos_rate"} <= set(t.columns)
+
+
+def test_summary_alias_and_missing_files(c4_dirs, tmp_path):
+    from tox.ablate_gnn import group_of, summarize
+    abl, base = c4_dirs
+    with pytest.raises(FileNotFoundError, match="tox.metrics"):
+        summarize("afp", abl, base)
+    assert group_of("afp-pmax", "afp") == "pooling" and group_of("afp-nopw", "afp") == "posweight"
+    with pytest.raises(ValueError):
+        group_of("mpnn-weird", "mpnn")
+    for tag in variants("mpnn"):
+        assert group_of(tag, "mpnn") in GROUPS                          # every runner token is classified
