@@ -235,8 +235,21 @@ def plot_curves(info: dict, path) -> None:
 
 
 def load_split_graphs(split: str, roles=("train", "val", "test")) -> dict:
-    """role -> graphs for a C2 split, with labels from C1 (NaN kept for missing).
-    Pass roles=("train", "val") to avoid loading test graphs/labels at all (used for tuning)."""
+    """TEMPORARY SHIM for Saman's `dataset_pyg.py` (plan S7), which is not in the repo yet.
+
+    The plan makes Saman own the PyG dataset class, the graphs.pt cache and
+    `get_loaders(split_name, seed, batch_size)`, and says Bhavya should never write
+    split-handling code. Until that file exists this function stands in for it, and it does
+    only the minimum: read the committed C2 split file (never re-splitting anything), look the
+    smiles up in the C1 labels, and featurize them with our `featurize_graph`. No caching.
+
+    When `dataset_pyg.py` lands: replace this function (and the DataLoader construction in `fit`
+    and `predict_probs`) by his loaders, delete this shim, and keep the C3 export unchanged.
+    Every other function here consumes plain lists of PyG `Data`, so nothing else depends on it.
+
+    role -> graphs, with labels from C1 (NaN kept for missing). Pass roles=("train", "val") to
+    avoid loading test graphs/labels at all (used for tuning).
+    """
     sp = json.loads((SPLITS / f"{split}.json").read_text())
     labels = pd.read_parquet(CLEAN).set_index("smiles")[TASKS]
     return {r: build_graphs(sp[r], labels.loc[sp[r]].to_numpy(dtype=np.float32))
