@@ -27,12 +27,21 @@ import torch.nn.functional as F
 import yaml
 from torch_geometric.loader import DataLoader
 
-from tox.constants import CLEAN, CONFIGS, FIGURES, PREDS, RESULTS, SPLITS, TASKS
+from tox.constants import CLEAN, CONFIGS, FIGURES, PREDS, RESULTS, SEEDS, SPLITS, TASKS
 from tox.featurize_graph import build_graphs
 from tox.metrics import score
 from tox.models_gnn import ALIASES, MODELS, build_model, canonical_name
 
 GNN_RESULTS = RESULTS / "gnn"                       # run logs / curves; checkpoints (*.pt) are git-ignored
+GNN_PARAMS = RESULTS / "gnn_params.json"            # tuned + frozen hyper-parameters (like aml_params.json)
+TUNED_KEYS = ("hidden", "n_layers", "dropout")      # the plan's tuning grid (B4)
+
+# (split, seed) pairs of the final grid: the same convention as the AML grid (train_aml.RUNS), so
+# the shared aggregator sees 3 runs per split family: scaffold_det x seeds 0-2, scaffold_s{k} and
+# random_s{k} with seed k.
+RUNS = ([("scaffold_det", s) for s in SEEDS]
+        + [(f"scaffold_s{s}", s) for s in SEEDS]
+        + [(f"random_s{s}", s) for s in SEEDS])
 
 
 POS_WEIGHT_CAP = 30.0            # plan B3: pos_weight is clipped at 30 for stability
@@ -212,12 +221,13 @@ def plot_curves(info: dict, path) -> None:
     plt.close(fig)
 
 
-def load_split_graphs(split: str) -> dict:
-    """role -> graphs for a C2 split, with labels from C1 (NaN kept for missing)."""
+def load_split_graphs(split: str, roles=("train", "val", "test")) -> dict:
+    """role -> graphs for a C2 split, with labels from C1 (NaN kept for missing).
+    Pass roles=("train", "val") to avoid loading test graphs/labels at all (used for tuning)."""
     sp = json.loads((SPLITS / f"{split}.json").read_text())
     labels = pd.read_parquet(CLEAN).set_index("smiles")[TASKS]
     return {r: build_graphs(sp[r], labels.loc[sp[r]].to_numpy(dtype=np.float32))
-            for r in ("train", "val", "test")}
+            for r in roles}
 
 
 def export_predictions(model, graphs_by_role: dict, path) -> pd.DataFrame:
@@ -242,16 +252,53 @@ def load_config(overrides: dict | None = None) -> dict:
     return cfg
 
 
+def make_pos_weight(cfg: dict, train_graphs):
+    """pos_weight tensor from TRAINING graphs only, or None when switched off in the config."""
+    if not cfg["pos_weight"]["enabled"]:
+        return None
+    hi = cfg["pos_weight"].get("clip_max")
+    if hi is None:
+        raise ValueError("pos_weight.enabled needs clip_max (the plan specifies 30)")
+    return compute_pos_weight(labels_of(train_graphs), clip_max=hi)
+
+
+def frozen_config(model_name: str, params_path=None) -> dict:
+    """Default config + the hyper-parameters tuned for this model on scaffold_det validation."""
+    path = GNN_PARAMS if params_path is None else params_path
+    state = json.loads(path.read_text()) if path.exists() else {}
+    best = state.get(canonical_name(model_name), {}).get("best")
+    if best is None:
+        raise FileNotFoundError(f"no tuned hyper-parameters for {model_name!r} in {path}; "
+                                "run `python -m tox.tune_gnn` first")
+    return load_config({k: best[k] for k in TUNED_KEYS})
+
+
+def run_grid(models, force: bool = False, runner=None, preds_dir=None, params_path=None) -> list:
+    """Final runs with FROZEN hyper-parameters: every (split, seed) in RUNS for each model.
+
+    Resumable: a run whose C3 file already exists is skipped unless force=True.
+    """
+    runner = runner or run
+    preds_dir = PREDS if preds_dir is None else preds_dir
+    done, cache = [], {}
+    for m in models:
+        m = canonical_name(m)
+        cfg = frozen_config(m, params_path)
+        for split, seed in RUNS:
+            if not force and (preds_dir / f"{m}__{split}__seed{seed}.parquet").exists():
+                continue
+            if split not in cache:
+                cache[split] = load_split_graphs(split)
+            runner(m, split, seed, cfg, out=preds_dir, graphs=cache[split])
+            done.append((m, split, seed))
+    return done
+
+
 def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GNN_RESULTS,
         graphs=None, fig_dir=None) -> dict:
     model_name = canonical_name(model_name)          # files always use the plan token, e.g. afp
     graphs = graphs or load_split_graphs(split)
-    pw = None
-    if cfg["pos_weight"]["enabled"]:
-        hi = cfg["pos_weight"].get("clip_max")
-        if hi is None:
-            raise ValueError("pos_weight.enabled needs clip_max (the plan specifies 30)")
-        pw = compute_pos_weight(labels_of(graphs["train"]), clip_max=hi)  # train labels only
+    pw = make_pos_weight(cfg, graphs["train"])
     set_seed(seed)
     model = build_model(model_name, **{k: cfg[k] for k in
                         ("hidden", "n_layers", "pooling", "dropout", "use_bond_features")})
@@ -273,13 +320,21 @@ def run(model_name: str, split: str, seed: int, cfg: dict, out=PREDS, log_dir=GN
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--model", choices=sorted(MODELS) + sorted(ALIASES), required=True)
-    ap.add_argument("--split", required=True)
+    ap = argparse.ArgumentParser(description="Train one GNN run, or the whole frozen grid (--grid).")
+    ap.add_argument("--model", choices=sorted(MODELS) + sorted(ALIASES))
+    ap.add_argument("--split")
     ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--epochs", type=int, help="override max_epochs (smoke tests)")
+    ap.add_argument("--grid", action="store_true", help="all RUNS for --models with tuned params")
+    ap.add_argument("--models", nargs="+", default=sorted(MODELS))
+    ap.add_argument("--force", action="store_true")
     args = ap.parse_args()
-    run(args.model, args.split, args.seed, load_config({"max_epochs": args.epochs}))
+    if args.grid:
+        run_grid(args.models, force=args.force)
+    else:
+        if not (args.model and args.split):
+            ap.error("--model and --split are required unless --grid is given")
+        run(args.model, args.split, args.seed, load_config({"max_epochs": args.epochs}))
 
 
 if __name__ == "__main__":
