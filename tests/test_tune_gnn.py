@@ -45,6 +45,8 @@ def test_tuning_picks_highest_val_pr_auc_not_roc(graphs, tmp_path, monkeypatch):
     state = json.loads(path.read_text())["gcn"]
     assert len(state["trials"]) == 4 and state["selection_metric"] == "val_mean_pr_auc"
     assert state["early_stopping"] == "val_mean_roc_auc" and state["split"] == "scaffold_det"
+    assert state["base_config"]["patience"] == 25 and state["base_config"]["max_epochs"] == 200
+    assert all(t["seconds"] >= 0 and t["epochs_run"] == 5 for t in state["trials"])
 
 
 def test_tuning_is_resumable_and_does_not_repeat_trials(graphs, tmp_path, monkeypatch):

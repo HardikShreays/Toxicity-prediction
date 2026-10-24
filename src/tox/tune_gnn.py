@@ -16,6 +16,7 @@ import argparse
 import itertools
 import json
 import os
+import time
 
 import torch
 
@@ -47,7 +48,8 @@ def tune(model_name: str, graphs=None, grid=None, seed: int = 0, base_cfg=None, 
     state = json.loads(path.read_text()) if path.exists() else {}
     entry = state.setdefault(model_name, {})
     entry.update({"split": SPLIT, "seed": seed, "selection_metric": SELECTION_METRIC,
-                  "early_stopping": "val_mean_roc_auc", "grid": grid})
+                  "early_stopping": "val_mean_roc_auc", "grid": grid,
+                  "base_config": base_cfg})            # full training config (lr, patience, pos_weight, ...)
     trials = entry.setdefault("trials", [])
     seen = {tuple(t[k] for k in TUNED_KEYS) for t in trials}
 
@@ -56,18 +58,20 @@ def tune(model_name: str, graphs=None, grid=None, seed: int = 0, base_cfg=None, 
             continue
         params = dict(zip(TUNED_KEYS, values))
         cfg = dict(base_cfg, **params)
+        t0 = time.time()
         set_seed(seed)
         model = build_model(model_name, **{k: cfg[k] for k in
                             ("hidden", "n_layers", "pooling", "dropout", "use_bond_features")})
         info = fit(model, graphs["train"], graphs["val"], cfg, seed, pw)    # no test input exists
         trials.append({**params, "val_pr_auc": info["best_val_pr_auc"],
                        "val_roc_auc": info["best_val_roc_auc"], "best_epoch": info["best_epoch"],
-                       "epochs_run": info["epochs_run"], "torch": torch.__version__})
+                       "epochs_run": info["epochs_run"], "seconds": round(time.time() - t0, 1),
+                       "torch": torch.__version__})
         best_trial = max(trials, key=lambda t: t["val_pr_auc"])        # first max wins ties
         entry["best"] = {k: best_trial[k] for k in TUNED_KEYS} | {"val_pr_auc": best_trial["val_pr_auc"]}
         _save(state, path)                                             # resumable after every config
         log(f"{model_name} {params}: val PR-AUC {info['best_val_pr_auc']:.3f} "
-            f"(ROC {info['best_val_roc_auc']:.3f}, {info['epochs_run']} epochs)")
+            f"(ROC {info['best_val_roc_auc']:.3f}, {info['epochs_run']} epochs, {trials[-1]['seconds']:.0f}s)")
     return entry["best"]
 
 
