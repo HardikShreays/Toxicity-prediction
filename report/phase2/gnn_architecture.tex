@@ -1,0 +1,47 @@
+% Phase 2 report section "Architecture logic" (Bhavya). Self-contained fragment: \input it from main.tex.
+% Cite keys: gilmer2017mpnn, xiong2020attentivefp, wu2018moleculenet, yang2019analyzing, mayr2016deeptox
+% (phase1/references.bib) and kipf2017gcn, hu2020pretrain, xu2019gin, li2018oversmooth,
+% oono2020expressive, caruana1997multitask (references_gnn.bib).
+\section{Architecture Logic}
+\label{sec:gnn-arch}
+
+\subsection{Molecules as graphs}
+A molecule is an undirected graph $G=(V,E)$ whose nodes are heavy atoms and whose edges are bonds. Each atom $v$ carries a feature vector $x_v\in\{0,1\}^{36}$ and each bond $\{u,v\}$ a vector $e_{uv}\in\{0,1\}^{6}$. The atom features are one-hot blocks for atomic number (12 listed elements plus ``other''), degree 0--5, formal charge $\{-1,0,+1,\text{other}\}$, hybridization $\{$SP, SP$^2$, SP$^3$, SP$^3$D, SP$^3$D$^2$, other$\}$ and total hydrogen count 0--4, plus aromatic and in-ring flags. The bond features are the bond type (single, double, triple, aromatic) and conjugated and in-ring flags. Every undirected bond is stored as two directed edges with identical features, which is what lets a message flow both ways. The labels of one molecule form a vector $y\in\{0,1,\mathrm{NaN}\}^{12}$, stored with shape $[1,12]$ so that a mini-batch of $B$ molecules has $y$ of shape $[B,12]$; missing labels stay NaN and are masked in the loss rather than filled. Chirality and bond stereo are not encoded, following the agreed schema.
+
+\subsection{Message passing and readout}
+Following the message-passing framework of Gilmer et al.~\cite{gilmer2017mpnn}, a layer updates every atom from its bonded neighbours $\mathcal N(v)$:
+\begin{equation}
+h_v^{(l+1)}=\phi\Big(h_v^{(l)},\ \mathop{\mathrm{AGG}}_{u\in\mathcal N(v)}\ \psi\big(h_u^{(l)},e_{uv}\big)\Big),\qquad h_v^{(0)}=x_v .
+\end{equation}
+After $L$ layers atom $v$ depends on all atoms within $L$ bonds of it, so $L$ is the size of the chemical neighbourhood the model can see. A \emph{readout} then maps the variable-size set of atom vectors to one fixed-size molecule vector. For GCN and MPNN we use the concatenation of the mean and the maximum over atoms,
+\begin{equation}
+g=\Big[\tfrac1{|V|}\textstyle\sum_{v}h_v^{(L)}\ \Big\|\ \max_{v}h_v^{(L)}\Big]\in\mathbb R^{256},
+\end{equation}
+because the mean summarises overall composition independently of molecule size, while the (element-wise) maximum records whether any atom strongly expresses a feature, which is the natural form of a toxicophore (a local substructure that is either present or not). A shared head $256\to128\to12$ (ReLU, dropout 0.2) turns $g$ into 12 logits.
+
+\subsection{The three architectures and why they are compared}
+\textbf{GCN}~\cite{kipf2017gcn} (3 layers, width 128, BatchNorm, ReLU, dropout 0.2). One layer is $H'=\sigma(\hat D^{-1/2}\hat A\hat D^{-1/2}HW)$ with $\hat A=A+I$: each atom takes a degree-normalised average of itself and its neighbours, followed by one shared linear map. It is the simplest message-passing model and it \emph{ignores bond features}; it is the baseline against which any benefit of bond information or of attention is measured.
+
+\textbf{MPNN with GINE layers.} Our \texttt{mpnn} uses the edge-aware variant of the Graph Isomorphism Network layer introduced for molecules by Hu et al.~\cite{hu2020pretrain} (the \texttt{GINEConv} of PyTorch Geometric~\cite{fey2019pyg}),
+\begin{equation}
+h_v'=\mathrm{MLP}\Big((1+\epsilon)\,h_v+\sum_{u\in\mathcal N(v)}\mathrm{ReLU}\big(h_u+W e_{uv}\big)\Big),
+\end{equation}
+where $\epsilon$ is learned and $W$ is a learned linear map that projects the 6-dimensional bond vector to the atom-feature width. Two properties motivate it. First, bonds enter the message through $We_{uv}$, so a double bond and an aromatic bond send different messages; GCN cannot make this distinction. Second, it \emph{sums} over neighbours and passes the result through an MLP, which Xu et al.~\cite{xu2019gin} show is as discriminative as the 1-dimensional Weisfeiler--Lehman test for plain GIN, whereas mean or degree-normalised aggregation can map different neighbourhoods to the same vector (e.g.\ one neighbour versus two identical neighbours). We use 3 layers with the same BatchNorm--ReLU--dropout block, readout and head as GCN. This is the message-passing model the project brief asks for.
+
+\textbf{AttentiveFP}~\cite{xiong2020attentivefp} (PyTorch Geometric implementation, 3 atom-level layers, 2 readout time steps). Neighbour messages are weighted by learned attention coefficients and atom states are updated with GRU cells; the molecule vector is then built by repeatedly attending over all atoms. It replaces the fixed mean$\|$max readout with a learned one, and is included as the strongest published graph baseline for molecular property prediction and as the third point of the comparison (fixed aggregation, bond-aware sum, attention).
+
+\subsection{Over-smoothing}
+Stacking message-passing layers makes atom representations of a connected graph more alike. For GCN this is exact in the linear case: the operator $\hat D^{-1/2}\hat A\hat D^{-1/2}$ is a low-pass filter, and Li et al.~\cite{li2018oversmooth} show that GCN propagation is a form of Laplacian smoothing, so repeated application drives features towards the dominant eigenspace. Oono and Suzuki~\cite{oono2020expressive} prove that, under conditions on the weights, the output of a deep GCN converges to a subspace determined only by the connected components and node degrees, losing the information the task needs. These are established results about \emph{depth tending to infinity} in citation-type graphs. Molecules are small: on the cleaned Tox21 set the median molecule has 16 heavy atoms and a graph diameter of 9 bonds (95th percentile 19), and only 19\% of molecules have diameter $\le5$. So 2--5 layers is far from the infinite-depth limit, and a 5-layer model still does not see the whole molecule from every atom for most compounds; whether any degradation appears is an empirical question. We therefore state it as a hypothesis and test it directly with the layer ablation (2, 3, 4, 5 layers): if over-smoothing matters here, validation and test scores should fall for deeper models, more for GCN than for GINE, whose learned $\epsilon$ and MLP can preserve the atom's own state.
+
+\subsection{Masked multi-task loss}
+Tox21 has 12 endpoints and about 17\% of the label matrix is missing, because a compound was not tested in an assay, not because it was negative. Let $m_{ij}\in\{0,1\}$ indicate that label $y_{ij}$ of molecule $i$ and endpoint $j$ is observed, $z_{ij}$ be the logit and $p_{ij}=\sigma(z_{ij})$. Treating the observed labels as independent Bernoulli variables, the negative log-likelihood of the observed entries, with the positive term weighted by $w_j$, is
+\begin{equation}
+\mathcal L=-\frac1{\sum_{i,j}m_{ij}}\sum_{i,j}m_{ij}\Big[w_j\,y_{ij}\log p_{ij}+(1-y_{ij})\log(1-p_{ij})\Big].
+\end{equation}
+Since $\partial\big(-[w y\log\sigma(z)+(1-y)\log(1-\sigma(z))]\big)/\partial z=(1-y)\sigma(z)-w\,y\,(1-\sigma(z))$, the gradient is
+\begin{equation}
+\frac{\partial\mathcal L}{\partial z_{ij}}=\frac{m_{ij}}{\sum m}\Big[(1-y_{ij})\,p_{ij}-w_j\,y_{ij}\,(1-p_{ij})\Big],
+\end{equation}
+which is exactly zero whenever $m_{ij}=0$: a missing label contributes neither loss nor gradient. Filling missing entries with 0 would instead assert that unmeasured means non-toxic and push every endpoint towards the negative class, so the loss must mask. In the code NaN labels are replaced by a dummy 0 \emph{before} the cross-entropy (so no NaN is ever evaluated) and the result is multiplied by the mask; a batch with no labels at all returns 0 through the clamp $\max(\sum m,1)$. The weight is $w_j=\min(n^-_j/n^+_j,30)$ computed on the training labels only, which counteracts the 3--16\% positive rates; the cap of 30 keeps the gradient of very rare endpoints bounded. Dividing by the total number of observed entries (not per endpoint) means endpoints with more labels contribute more to the gradient.
+
+\emph{Why multi-task.} Related endpoints share structure (our EDA finds strong correlation between NR-AR/NR-AR-LBD and NR-ER/NR-ER-LBD), and sharing a representation can help the sparse endpoints~\cite{caruana1997multitask,mayr2016deeptox}. This is a hypothesis for our data, tested by the multi-task versus 12 single-task ablation. \emph{Caveat.} Ignoring missing labels is unbiased for the observed-label objective only if missingness is unrelated to the label given the molecule; assay selection in Tox21 is not random, so some bias is possible.

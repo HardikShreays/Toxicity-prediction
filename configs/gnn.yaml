@@ -1,0 +1,14 @@
+# B4 - GNN training defaults. Hyper-parameters are tuned on validation only; test is never used.
+hidden: 128
+n_layers: 3
+pooling: meanmax         # plan B2: mean || max (ablation: mean | max | meanmax). AttentiveFP has its own readout
+dropout: 0.2
+use_bond_features: true
+lr: 0.001
+weight_decay: 0.00001
+batch_size: 64
+max_epochs: 200          # plan B4
+patience: 25             # plan B4: early stopping on val mean ROC-AUC. PR-AUC is only for choosing configs
+pos_weight:              # plan B3: n_neg / n_pos per task from train labels, clipped at 30
+  enabled: true          # the pos_weight on/off ablation (B5) turns this off
+  clip_max: 30

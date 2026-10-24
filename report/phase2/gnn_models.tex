@@ -1,0 +1,18 @@
+% Phase 2 report section "DL models" (Bhavya). \input from main.tex. The results subsections are
+% appended once the experiments are complete; every number there comes from results/ files.
+\section{Deep Learning Models}
+\label{sec:gnn-models}
+
+\subsection{Implementation and training protocol}
+The three models (\texttt{gcn}, \texttt{mpnn}, \texttt{afp}) are implemented in PyTorch with PyTorch Geometric~\cite{fey2019pyg} on the cleaned data and the same seven split files as the classical models. Every model outputs 12 logits per molecule; probabilities are $\sigma(\text{logit})$ and are written in the common prediction format, so the shared \texttt{metrics.py} scores them exactly as it scores the fingerprint models.
+
+\textbf{Optimisation.} Adam~\cite{kingma2015adam} with learning rate $10^{-3}$, weight decay $10^{-5}$, batch size 64, at most 200 epochs, minimising the masked weighted binary cross-entropy of Section~\ref{sec:gnn-arch} with $w_j=\min(n_j^-/n_j^+,30)$ computed on training labels only. Random seeds for Python, NumPy and PyTorch are set together; the shuffling of the training set depends only on (seed, epoch), so an interrupted run resumes to the identical result. The state of every epoch (weights, optimiser, random generators, early-stopping counters) is checkpointed, and a run is skipped when its prediction file already exists.
+
+\textbf{Early stopping and model selection.} After each epoch the mean validation ROC-AUC over the endpoints that can be scored is computed with the shared scorer. Training stops when it has not improved for 25 epochs, and the weights of the best epoch are restored. Validation PR-AUC is logged at the same epoch and is the only criterion used to choose between hyper-parameter settings. The test set is not seen by the training function: it is predicted once, after the best weights are restored, and no choice (stopping, epoch, hyper-parameters, ablation arm) uses test labels.
+
+\textbf{Hyper-parameter tuning.} For each architecture we trained all 12 combinations of hidden width $\{64,128,256\}$, number of layers $\{3,4\}$ and dropout $\{0.1,0.3\}$ on \texttt{scaffold\_det}, with seed 0 and validation data only, and froze the combination with the highest validation PR-AUC. The frozen setting is then used unchanged on every split and seed. Tuning with a single seed is a budget decision: differences between neighbouring configurations that are smaller than the seed-to-seed spread reported below should not be over-interpreted.
+
+\textbf{Final runs.} Each architecture is trained nine times: \texttt{scaffold\_det} with seeds 0, 1, 2, and the balanced scaffold splits \texttt{scaffold\_s}$k$ and the random splits \texttt{random\_s}$k$ with seed $k$, the same convention as the classical grid, so that results are averaged over three runs per split family.
+
+\subsection{Ablations}
+All five ablations use \texttt{mpnn}, the architecture whose defining feature (bond information) is one of the ablated factors, on \texttt{scaffold\_det} with seeds 0, 1, 2, and change one factor at a time relative to the frozen model: (i) 2, 3, 4 or 5 message-passing layers; (ii) bond features zeroed (\texttt{mpnn-noedge}); (iii) mean, max or mean$\|$max readout; (iv) twelve independent single-endpoint models instead of one multi-task model; (v) the positive-class weights switched off. The baseline arm of (ii), (iii) and (v) is the main \texttt{mpnn} run. In the single-endpoint arm each of the 12 models has its own initialisation, early stopping on its own endpoint, and (when enabled) its own weight. Because the architecture of the ablations is a design choice that the other architectures could answer differently, conclusions are stated for \texttt{mpnn} only.
