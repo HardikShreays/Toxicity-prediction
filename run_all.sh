@@ -16,6 +16,8 @@ python -m tox.ablate_fp --summary
 python -m tox.aggregate
 
 # figures + analysis
+python -m tox.analysis.importance
+python -m tox.analysis.make_slides_phase1
 for nb in notebooks/01_eda.ipynb notebooks/02_aml.ipynb; do
   jupyter nbconvert --to notebook --execute --inplace "$nb"
 done
