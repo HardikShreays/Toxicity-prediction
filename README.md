@@ -17,6 +17,10 @@ pytest                      # 33 tests: metrics, splits, featurization, models, 
                             #  the 6 GNN test modules skip unless torch + torch_geometric are installed)
 ```
 
+**macOS:** XGBoost needs the OpenMP runtime. If `import xgboost` fails with
+`Library not loaded: @rpath/libomp.dylib`, run `brew install libomp` (the XGBoost wheel looks for it in
+`/opt/homebrew/opt/libomp/lib`). Linux and Colab need nothing extra.
+
 ## Reproduce everything
 
 ```bash
