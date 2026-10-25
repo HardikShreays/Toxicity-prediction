@@ -37,7 +37,7 @@ We use the MoleculeNet/DeepChem release of Tox21~\cite{wu2018moleculenet}: 7{,}8
 
 \textbf{Labels.} Positive rates range from 2.9\% (NR-PPAR-gamma) to 15.9\% (SR-ARE), and 17\% of the label matrix is missing (7--26\% per endpoint). The strongest label correlations are NR-AR/NR-AR-LBD ($\phi=0.57$) and NR-ER/NR-ER-LBD ($\phi=0.54$): the full-length receptor assay and its ligand-binding-domain version (Fig.~\ref{fig:labels}).
 
-\textbf{Molecules and scaffolds.} Median size is 16 heavy atoms. 57 molecules have three or fewer heavy atoms, mostly bare metal ions left after salt stripping (e.g.\ Hg$^{2+}$, Cu$^{2+}$), for which a fingerprint is almost empty; eight natural products exceed 100 heavy atoms. The scaffold distribution is extremely skewed: 1{,}753 acyclic molecules share the empty scaffold, 1{,}479 share benzene, and 1{,}730 scaffolds occur only once. Label availability is not independent of structure: larger molecules are labelled on fewer endpoints (Spearman $\rho=-0.39$), so labels are not missing completely at random.
+\textbf{Molecules and scaffolds.} Median size is 16 heavy atoms. 57 molecules have three or fewer heavy atoms, mostly bare metal ions left after salt stripping (e.g.\ Hg$^{2+}$, Cu$^{2+}$), for which a fingerprint is almost empty; eight natural products have 100 or more heavy atoms. The scaffold distribution is extremely skewed: 1{,}753 acyclic molecules share the empty scaffold, 1{,}479 share benzene, and 1{,}730 scaffolds occur only once. Label availability is not independent of structure: larger molecules are labelled on fewer endpoints (Spearman $\rho=-0.39$), so labels are not missing completely at random.
 
 \begin{figure}[t]
 \centering
