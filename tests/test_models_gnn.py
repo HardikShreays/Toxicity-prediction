@@ -1,4 +1,6 @@
 import pytest
+pytest.importorskip("torch", reason="GNN tests need torch (not in requirements.txt)")
+pytest.importorskip("torch_geometric", reason="GNN tests need torch_geometric (not in requirements.txt)")
 import torch
 from torch_geometric.data import Batch
 

@@ -2,6 +2,8 @@ import json
 
 import numpy as np
 import pytest
+pytest.importorskip("torch", reason="GNN tests need torch (not in requirements.txt)")
+pytest.importorskip("torch_geometric", reason="GNN tests need torch_geometric (not in requirements.txt)")
 import torch
 
 from tox.constants import SEEDS

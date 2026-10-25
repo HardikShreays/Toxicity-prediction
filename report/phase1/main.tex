@@ -37,7 +37,7 @@ We use the MoleculeNet/DeepChem release of Tox21~\cite{wu2018moleculenet}: 7{,}8
 
 \textbf{Labels.} Positive rates range from 2.9\% (NR-PPAR-gamma) to 15.9\% (SR-ARE), and 17\% of the label matrix is missing (7--26\% per endpoint). The strongest label correlations are NR-AR/NR-AR-LBD ($\phi=0.57$) and NR-ER/NR-ER-LBD ($\phi=0.54$): the full-length receptor assay and its ligand-binding-domain version (Fig.~\ref{fig:labels}).
 
-\textbf{Molecules and scaffolds.} Median size is 16 heavy atoms. 57 molecules have three or fewer heavy atoms, mostly bare metal ions left after salt stripping (e.g.\ Hg$^{2+}$, Cu$^{2+}$), for which a fingerprint is almost empty; eight natural products exceed 100 heavy atoms. The scaffold distribution is extremely skewed: 1{,}753 acyclic molecules share the empty scaffold, 1{,}479 share benzene, and 1{,}730 scaffolds occur only once. Label availability is not independent of structure: larger molecules are labelled on fewer endpoints (Spearman $\rho=-0.39$), so labels are not missing completely at random.
+\textbf{Molecules and scaffolds.} Median size is 16 heavy atoms. 57 molecules have three or fewer heavy atoms, mostly bare metal ions left after salt stripping (e.g.\ Hg$^{2+}$, Cu$^{2+}$), for which a fingerprint is almost empty; eight natural products have 100 or more heavy atoms. The scaffold distribution is extremely skewed: 1{,}753 acyclic molecules share the empty scaffold, 1{,}479 share benzene, and 1{,}730 scaffolds occur only once. Label availability is not independent of structure: larger molecules are labelled on fewer endpoints (Spearman $\rho=-0.39$), so labels are not missing completely at random.
 
 \begin{figure}[t]
 \centering
@@ -139,7 +139,7 @@ descriptors only & 0.761$\pm$0.001 & 0.402$\pm$0.003 \\
 \label{fig:gap}
 \end{figure}
 
-\textbf{Per endpoint.} For the selected random forest on \texttt{scaffold\_det}, ROC-AUC ranges from 0.692 (NR-ER) to 0.866 (SR-MMP). The weakest PR-AUC is SR-ATAD5 (0.229, at a positive rate of 0.051), which is still 4.5$\times$ its random baseline.
+\textbf{Per endpoint.} For the selected random forest on \texttt{scaffold\_det}, ROC-AUC ranges from 0.693 (NR-ER) to 0.866 (SR-MMP). The weakest PR-AUC is SR-ATAD5 (0.229, at a positive rate of 0.051), which is still 4.5$\times$ its random baseline.
 
 \textbf{Feature importance.} We inspect XGBoost gain on \texttt{scaffold\_det} (FP+descriptors). Whole-molecule descriptors take between 35\% (NR-AR) and 72\% (SR-HSE) of the total gain per endpoint (Fig.~\ref{fig:share}), in line with descriptors outperforming fingerprints on unseen scaffolds. The leading features are chemically plausible: NR-AhR is led by \texttt{fr\_benzene} and aromatic-ring counts, consistent with planar polyaromatic AhR ligands, and SR-MMP by \texttt{fr\_benzene} and \texttt{fr\_phenol}. SR-p53 and SR-HSE rely on size and surface-area descriptors rather than specific groups. Mapping the top fingerprint bits back to substructures (Fig.~\ref{fig:bits}) shows that for NR-AhR the highest-gain bits are generic low-radius aromatic environments present in thousands of molecules, not specific toxicophores; since a bit can also hide several colliding substructures, we treat these as hints rather than mechanisms.
 

@@ -3,6 +3,8 @@ import json
 import numpy as np
 import pandas as pd
 import pytest
+pytest.importorskip("torch", reason="GNN tests need torch (not in requirements.txt)")
+pytest.importorskip("torch_geometric", reason="GNN tests need torch_geometric (not in requirements.txt)")
 import torch
 
 from tox.ablate_gnn import GROUPS, SPLIT, run_ablations, run_single_task, variants

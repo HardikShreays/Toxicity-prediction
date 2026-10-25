@@ -12,9 +12,14 @@ Python 3.11.
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pytest                      # 29 tests: metrics, splits, featurization, xgb importance
-                            # (the 7 real-split checks skip until tox.data has built the parquet)
+pytest                      # 33 tests: metrics, splits, featurization, models, xgb importance
+                            # (the 7 real-split checks skip until tox.data has built the parquet;
+                            #  the 6 GNN test modules skip unless torch + torch_geometric are installed)
 ```
+
+**macOS:** XGBoost needs the OpenMP runtime. If `import xgboost` fails with
+`Library not loaded: @rpath/libomp.dylib`, run `brew install libomp` (the XGBoost wheel looks for it in
+`/opt/homebrew/opt/libomp/lib`). Linux and Colab need nothing extra.
 
 ## Reproduce everything
 
