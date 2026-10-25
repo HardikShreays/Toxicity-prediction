@@ -1,8 +1,8 @@
 # Tox21 toxicity prediction
 
 Predicting 12 Tox21 toxicity endpoints from SMILES, and checking how much performance survives on
-**unseen chemical scaffolds**. Phase 1 (this) = Morgan fingerprints + RDKit descriptors with
-logistic regression, random forest and XGBoost. Phase 2 adds GNNs and a hybrid model on the same
+**unseen chemical scaffolds**. Phase 1 = Morgan fingerprints + RDKit descriptors with
+logistic regression, random forest and XGBoost. Phase 2 adds GNNs (and a hybrid model, in progress) on the same
 splits and scorer.
 
 ## Setup
@@ -27,6 +27,18 @@ AML grid (6 configs x 12 endpoints x 9 runs) and the fingerprint ablation, score
 `tox.metrics`, writes `results/summary.csv` + `results/headline.csv`, refreshes the table below and
 re-runs the notebooks. Takes about 1 hour on an 8-core M3 laptop, most of it the random forests.
 `train_aml.py` skips runs whose prediction file already exists, so it can be resumed.
+
+### GNN pipeline (Phase 2)
+
+```bash
+PY=/path/to/python ./run_gnn.sh     # PY defaults to .venv/bin/python, then python3
+```
+
+Run after `run_all.sh` (needs its splits). Three stages: tune GCN / MPNN / AttentiveFP on the
+`scaffold_det` validation set (36 configs), train the frozen-config grid (3 models x 3 splits x 3 seeds
+= 27 runs) and score it, then the MPNN ablations (27 runs). It is resumable and refuses to start if a
+GNN job is already running. Logs are in `results/gnn/pipeline.log`; `PIPELINE_DONE` / `PIPELINE_FAILED`
+mark the outcome. Needs PyTorch Geometric (see `requirements.txt`).
 
 ## Results (test, 12-endpoint mean, mean ± std over 3 runs)
 
@@ -60,6 +72,12 @@ src/tox/
   ablate_fp.py      radius / length / descriptors-only ablation
   metrics.py        the only scorer (masked ROC-AUC / PR-AUC)          -> C4
   aggregate.py      summary.csv, headline.csv, README table
+  featurize_graph.py  SMILES -> PyG molecular graphs
+  models_gnn.py     GCN / MPNN / AttentiveFP
+  train_gnn.py      masked-loss training, early stopping, C3 export
+  tune_gnn.py       hyper-parameter search on val only
+  ablate_gnn.py     MPNN architecture ablations
+  gnn_report.py     LaTeX tables from saved C4 files (no new metrics)
   analysis/         importance.py (gain -> substructures, figures), make_slides_phase1.py
 notebooks/          01_eda, 02_aml
 report/phase1/      IEEEtran LaTeX report, slides.pptx (built by analysis/make_slides_phase1.py)
