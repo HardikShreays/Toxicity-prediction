@@ -38,7 +38,7 @@ Run after `run_all.sh` (needs its splits). Three stages: tune GCN / MPNN / Atten
 `scaffold_det` validation set (36 configs), train the frozen-config grid (3 models x 3 splits x 3 seeds
 = 27 runs) and score it, then the MPNN ablations (27 runs). It is resumable and refuses to start if a
 GNN job is already running. Logs are in `results/gnn/pipeline.log`; `PIPELINE_DONE` / `PIPELINE_FAILED`
-mark the outcome. Needs PyTorch Geometric (see `requirements.txt`).
+mark the outcome. Needs PyTorch + PyTorch Geometric (not in `requirements.txt`).
 
 ## Results (test, 12-endpoint mean, mean ± std over 3 runs)
 
