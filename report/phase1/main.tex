@@ -139,7 +139,7 @@ descriptors only & 0.761$\pm$0.001 & 0.402$\pm$0.003 \\
 \label{fig:gap}
 \end{figure}
 
-\textbf{Per endpoint.} For the selected random forest on \texttt{scaffold\_det}, ROC-AUC ranges from 0.692 (NR-ER) to 0.866 (SR-MMP). The weakest PR-AUC is SR-ATAD5 (0.229, at a positive rate of 0.051), which is still 4.5$\times$ its random baseline.
+\textbf{Per endpoint.} For the selected random forest on \texttt{scaffold\_det}, ROC-AUC ranges from 0.693 (NR-ER) to 0.866 (SR-MMP). The weakest PR-AUC is SR-ATAD5 (0.229, at a positive rate of 0.051), which is still 4.5$\times$ its random baseline.
 
 \textbf{Feature importance.} We inspect XGBoost gain on \texttt{scaffold\_det} (FP+descriptors). Whole-molecule descriptors take between 35\% (NR-AR) and 72\% (SR-HSE) of the total gain per endpoint (Fig.~\ref{fig:share}), in line with descriptors outperforming fingerprints on unseen scaffolds. The leading features are chemically plausible: NR-AhR is led by \texttt{fr\_benzene} and aromatic-ring counts, consistent with planar polyaromatic AhR ligands, and SR-MMP by \texttt{fr\_benzene} and \texttt{fr\_phenol}. SR-p53 and SR-HSE rely on size and surface-area descriptors rather than specific groups. Mapping the top fingerprint bits back to substructures (Fig.~\ref{fig:bits}) shows that for NR-AhR the highest-gain bits are generic low-radius aromatic environments present in thousands of molecules, not specific toxicophores; since a bit can also hide several colliding substructures, we treat these as hints rather than mechanisms.
 
