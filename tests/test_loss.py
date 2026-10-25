@@ -1,6 +1,8 @@
 import math
 
 import pytest
+pytest.importorskip("torch", reason="GNN tests need torch (not in requirements.txt)")
+pytest.importorskip("torch_geometric", reason="GNN tests need torch_geometric (not in requirements.txt)")
 import torch
 import torch.nn.functional as F
 
