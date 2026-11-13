@@ -4,6 +4,7 @@
 % Keys: references_gnn.bib (kipf2017gcn, xu2019gin, hu2020pretrain, li2018oversmooth, oono2020expressive)
 % and ../phase1/references.bib (gilmer2017mpnn, xiong2020attentivefp, yang2019analyzing).
 \subsection{Graph neural networks for molecules}
+\label{sec:related-gnn}
 \textbf{Graph convolutional networks.} Kipf and Welling~\cite{kipf2017gcn} derive a convolution layer for graph-structured data from a first-order approximation of spectral graph convolutions; its cost grows linearly with the number of edges, and its hidden layers encode both graph structure and node features. In our work it is the simplest message-passing baseline: it averages neighbours with a degree normalisation and has no input for bond types.
 
 \textbf{How expressive are GNNs?} Xu et al.~\cite{xu2019gin} build a theoretical framework for the discriminative power of message-passing networks. They show that popular variants such as GCN and GraphSAGE fail to distinguish some simple graph structures, and propose the Graph Isomorphism Network, whose discriminative power matches the Weisfeiler--Lehman graph isomorphism test. In our work this motivates summing (not averaging) neighbour messages in the bond-aware model.

@@ -1,0 +1,27 @@
+% Phase 2 limitations (Hardik).
+\section{Limitations}
+\label{sec:limitations}
+The Phase 1 limitations carry over unchanged: Tox21 assays are in-vitro screens, not
+organism toxicity; labels are noisy (44 conflicting duplicate pairs) and heavily missing
+(17\% of the matrix, and not missing at random); several endpoints have very few positives;
+and a scaffold split, while much harder than a random split, is still not prospective
+validation. On top of these, the Phase 2 additions have their own caveats:
+
+\begin{itemize}
+\item \textbf{One tuning seed.} Hyper-parameters are chosen with seed 0 on
+\texttt{scaffold\_det} validation only; differences between neighbouring configurations
+that are smaller than the seed-to-seed spread reported in the tables should not be
+over-interpreted.
+\item \textbf{Hybrid parents share their history.} The fusion and embedding hybrids
+warm-start from the MPNN checkpoint of the same split and seed, which itself was
+early-stopped on that split's validation. This is the same information the GNN parent
+had, so the comparison against the parent is fair, but the encoder has seen validation
+through early stopping and so have all models in this comparison.
+\item \textbf{Ablations are MPNN-based.} The fusion graph branch and the embedding
+features use the tuned MPNN only; conclusions about combining branches may not transfer
+to GCN or AttentiveFP encoders.
+\item \textbf{Statistics are exploratory.} The Wilcoxon tests run over 12 endpoints and
+many model pairs without multiplicity correction; $p$ values near 0.05 are suggestions.
+\item \textbf{Compute budget.} All training is single-machine CPU; the GNN hyper-parameter
+grid (36 configs) and the hybrid runs are small by deep-learning standards.
+\end{itemize}

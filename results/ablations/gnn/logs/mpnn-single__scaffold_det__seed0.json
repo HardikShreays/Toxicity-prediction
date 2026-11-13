@@ -1,0 +1,138 @@
+{
+ "model": "mpnn",
+ "tag": "mpnn-single",
+ "split": "scaffold_det",
+ "seed": 0,
+ "config": {
+  "hidden": 256,
+  "n_layers": 4,
+  "pooling": "meanmax",
+  "dropout": 0.1,
+  "use_bond_features": true,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "batch_size": 64,
+  "max_epochs": 200,
+  "patience": 25,
+  "pos_weight": {
+   "enabled": true,
+   "clip_max": 30
+  }
+ },
+ "single_task": true,
+ "versions": {
+  "torch": "2.8.0"
+ },
+ "pos_weight": [
+  22.64197540283203,
+  27.46596908569336,
+  7.858108043670654,
+  23.52083396911621,
+  6.834890842437744,
+  18.196552276611328,
+  30.0,
+  5.99708890914917,
+  27.725889205932617,
+  18.37269401550293,
+  5.756795406341553,
+  18.338077545166016
+ ],
+ "tasks": [
+  {
+   "task": "NR-AR",
+   "seed": 0,
+   "best_epoch": 13,
+   "epochs_run": 39,
+   "val_roc_auc": 0.7717834078489817,
+   "val_pr_auc": 0.23098722026186655
+  },
+  {
+   "task": "NR-AR-LBD",
+   "seed": 1,
+   "best_epoch": 9,
+   "epochs_run": 35,
+   "val_roc_auc": 0.8631360777587193,
+   "val_pr_auc": 0.37322829918393347
+  },
+  {
+   "task": "NR-AhR",
+   "seed": 2,
+   "best_epoch": 9,
+   "epochs_run": 35,
+   "val_roc_auc": 0.8924784069097889,
+   "val_pr_auc": 0.6144219631015799
+  },
+  {
+   "task": "NR-Aromatase",
+   "seed": 3,
+   "best_epoch": 46,
+   "epochs_run": 72,
+   "val_roc_auc": 0.7662721893491123,
+   "val_pr_auc": 0.3368983061721914
+  },
+  {
+   "task": "NR-ER",
+   "seed": 4,
+   "best_epoch": 34,
+   "epochs_run": 60,
+   "val_roc_auc": 0.7260000000000001,
+   "val_pr_auc": 0.339038247653034
+  },
+  {
+   "task": "NR-ER-LBD",
+   "seed": 5,
+   "best_epoch": 29,
+   "epochs_run": 55,
+   "val_roc_auc": 0.7927750410509031,
+   "val_pr_auc": 0.2603598890888233
+  },
+  {
+   "task": "NR-PPAR-gamma",
+   "seed": 6,
+   "best_epoch": 26,
+   "epochs_run": 52,
+   "val_roc_auc": 0.7772051368705644,
+   "val_pr_auc": 0.15849902393403362
+  },
+  {
+   "task": "SR-ARE",
+   "seed": 7,
+   "best_epoch": 30,
+   "epochs_run": 56,
+   "val_roc_auc": 0.7235294117647059,
+   "val_pr_auc": 0.47263286527243714
+  },
+  {
+   "task": "SR-ATAD5",
+   "seed": 8,
+   "best_epoch": 47,
+   "epochs_run": 73,
+   "val_roc_auc": 0.7908097851171855,
+   "val_pr_auc": 0.212851114346597
+  },
+  {
+   "task": "SR-HSE",
+   "seed": 9,
+   "best_epoch": 21,
+   "epochs_run": 47,
+   "val_roc_auc": 0.762820512820513,
+   "val_pr_auc": 0.3462639320515082
+  },
+  {
+   "task": "SR-MMP",
+   "seed": 10,
+   "best_epoch": 114,
+   "epochs_run": 140,
+   "val_roc_auc": 0.8460394107891913,
+   "val_pr_auc": 0.5964991615187789
+  },
+  {
+   "task": "SR-p53",
+   "seed": 11,
+   "best_epoch": 20,
+   "epochs_run": 46,
+   "val_roc_auc": 0.7927660681759042,
+   "val_pr_auc": 0.42854885584419355
+  }
+ ]
+}

@@ -1,0 +1,34 @@
+{
+ "variant": "hyb_stack",
+ "tag": "hyb_stack",
+ "split": "scaffold_s2",
+ "seed": 2,
+ "config": {
+  "encoder": "mpnn",
+  "fp_hidden": 128,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "batch_size": 64,
+  "max_epochs": 200,
+  "patience": 25,
+  "pos_weight": {
+   "enabled": true,
+   "clip_max": 30
+  },
+  "embxgb": {
+   "fine_tune_epochs": 30,
+   "fine_tune_lr": 0.0001
+  },
+  "stack": {
+   "xgb_parent": "xgb_fpdesc",
+   "gnn_parent": "mpnn"
+  },
+  "use_fp": true,
+  "use_graph": true
+ },
+ "parents": {
+  "xgb": "xgb_fpdesc",
+  "gnn": "mpnn"
+ },
+ "fallback_tasks": []
+}
