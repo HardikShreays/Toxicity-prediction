@@ -1,0 +1,21 @@
+# Phase 2 hybrid models (plan p. 18-19). The parents are the frozen tuned MPNN
+# (results/gnn_params.json + the mpnn__{split}__seed{s}.pt checkpoints from ./run_gnn.sh) and
+# the Morgan fingerprint. Both are only ever used with weights/params from the SAME split's
+# train rows; nothing here is selected on the test set.
+encoder: mpnn            # the message-passing parent (ASSUMPTION: fusion/embxgb build on mpnn,
+                         # not gcn/afp - see tox/hybrid.py docstring)
+fp_hidden: 128           # fingerprint MLP branch width (ASSUMPTION: plan says "small MLP branch")
+lr: 0.001                # same optimizer recipe as the GNN runs (plan B4)
+weight_decay: 0.00001
+batch_size: 64
+max_epochs: 200
+patience: 25             # early stopping on val mean ROC-AUC, as in the GNN runs
+pos_weight:
+  enabled: true
+  clip_max: 30
+embxgb:
+  fine_tune_epochs: 30   # the fine-tuned-encoder ablation arm: this many extra epochs...
+  fine_tune_lr: 0.0001   # ...at this lr, before embeddings are frozen into XGBoost
+stack:
+  xgb_parent: xgb_fpdesc # the fingerprint parent for the stacking meta-learner
+  gnn_parent: mpnn       # the graph parent (the frozen tuned runs of ./run_gnn.sh)

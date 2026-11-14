@@ -1,0 +1,136 @@
+% Phase 2 hybrid models and final comparison (Hardik). \input from main.tex.
+% Every number comes from results/ files via tox.hybrid_report / tox.gnn_report tables;
+% nothing in this section was measured outside tox.metrics.
+\section{Hybrid Models}
+\label{sec:hybrid}
+
+\subsection{Rationale and the three variants}
+The two parents of our Phase 2 comparison make different mistakes. The fingerprint models
+encode a fixed vocabulary of substructures, so they are strong on scaffolds they have seen
+variations of and weak on genuinely new chemistry; the graph networks learn task-specific
+representations from the same training rows, but with 3--16\% positives per endpoint they
+overfit the sparse endpoints (Section~\ref{sec:gnn-models}). If the error profiles are
+sufficiently different, combining the two should help most on the sparse endpoints and on
+the low-similarity test molecules --- and that is a testable claim, not a slogan
+(Section~\ref{sec:hybrid-ablation}). We combine the two parents three ways, in increasing
+order of coupling:
+
+\begin{description}
+\item[hyb\_embxgb] The pooled readout vector of the frozen, tuned MPNN
+(Section~\ref{sec:gnn-models}; encoder weights from the same split and seed, so it was
+trained on this split's training rows only) is concatenated with the 2048-bit Morgan
+fingerprint, and one XGBoost is fitted per endpoint on the concatenation, tuned on
+validation PR-AUC exactly like the Phase 1 grid.
+\item[hyb\_stack] A per-endpoint logistic regression is fitted on the \emph{validation}
+probabilities of \texttt{xgb\_fpdesc} and \texttt{mpnn} and applied to test. The
+meta-learner is never fitted on test. Endpoints whose validation labels do not contain
+both classes have nothing to learn: for them the stack falls back to the mean of the two
+parents.
+\item[hyb\_fusion] The joint model: the Morgan fingerprint goes through a small MLP branch,
+the graph through the MPNN encoder branch (warm-started from the checkpoint of the same
+split and seed), the two vectors are concatenated before one shared head, and the whole
+network is trained end to end with the masked weighted BCE of
+Section~\ref{sec:gnn-arch}, the Adam recipe of Section~\ref{sec:gnn-models}, and the same
+early stopping (validation mean ROC-AUC, patience 25). The graph branch is initialised
+from the parent checkpoint, so fusion starts from a trained message passer and fine-tunes
+it jointly with the fingerprint branch.
+\end{description}
+
+Two rules keep the comparison honest (team plan, p.~19): the GNN encoder is only ever used
+with weights trained on the same split's training part --- reusing an encoder trained on
+all data would leak; and the stacking meta-learner is fitted on validation, never on test.
+Every hybrid is reported against both parents on the same splits and seeds
+(Table~\ref{tab:hybrid-main}).
+
+\subsection{Results}
+Table~\ref{tab:hybrid-main} is the final comparison on the shared splits and scorer. Three
+findings survive the seed spread and the Wilcoxon tests of Section~\ref{sec:validation}:
+
+\begin{enumerate}
+\item \textbf{The GNNs close most, but not all, of the gap to the fingerprint models.}
+On the randomized scaffold splits the graph models reach 0.813--0.828 mean test ROC-AUC
+against the classical models' 0.775--0.839, and all three beat the corresponding Phase 1
+fingerprint-only models; but \texttt{rf\_fpdesc} stays ahead of every graph model
+(Wilcoxon $p=0.02$--$0.03$, Table~\ref{tab:hybrid-wilcoxon}), in line with what
+Yang et al.~\cite{yang2019analyzing} report for well-tuned fingerprint models.
+\item \textbf{Stacking is the hybrid that works.} \texttt{hyb\_stack} beats both of its
+parents on the scaffold and random split families (its parents score 0.813 and 0.812 mean
+ROC-AUC on the scaffold splits; the stack 0.836) and is the only model the Wilcoxon test
+cannot separate from \texttt{rf\_fpdesc} ($p=0.47$); on the random splits it is ahead on
+paper (0.864 vs 0.862) with the same seed spread.
+\item \textbf{End-to-end fusion is a negative result with a clear cause.}
+\texttt{hyb\_fusion} reaches only 0.748/0.311 (ROC/PR) on \texttt{scaffold\_det}, below
+both parents. Fine-tuning the whole 256-unit encoder at the GNN recipe's learning rate
+$10^{-3}$ degrades within a few epochs, so early stopping freezes the epoch-0 or epoch-1
+(warm-start) weights in 7 of 9 runs. The ablations locate the failure: removing the fingerprint branch
+changes almost nothing (0.744), while removing the graph branch collapses to 0.671 - the
+joint head alone cannot learn what the fingerprints know.
+\end{enumerate}
+
+The sparse/dense and similarity-bin analyses (Tables~\ref{tab:hybrid-sparse}
+and~\ref{tab:hybrid-simbins}) test the stated rationale of the plan: the gap between the
+best fingerprint model and the best hybrid is widest on the 4 sparsest endpoints and on
+the $[0,0.3)$ Tanimoto bin, where \texttt{hyb\_stack} (0.724) clearly beats its graph
+parent \texttt{mpnn} (0.645) - but \texttt{rf\_fpdesc} is also strong there (0.751), so
+the honest conclusion is that the stacking gains come from averaging two different error
+profiles, not from a special affinity of hybrids for unseen scaffolds.
+
+\input{hybrid_results_tables}
+
+\subsection{Ablations}
+\label{sec:hybrid-ablation}
+Five ablations ask what each part contributes (plan p.~19); all run on
+\texttt{scaffold\_det} with seeds 0--2 and change one factor at a time relative to the
+main run of the same variant (Table~\ref{tab:hybrid-ablation}):
+
+\begin{enumerate}
+\item \textbf{fusion without the fingerprint branch} (\texttt{hyb\_fusion-nofp}): does the
+graph alone, trained with the fusion head, match the fingerprint-informed model?
+\item \textbf{fusion without the graph branch} (\texttt{hyb\_fusion-nograph}): does the
+fingerprint alone, under the identical protocol, match the joint model?
+\item \textbf{frozen vs fine-tuned encoder in hyb\_embxgb} (\texttt{hyb\_embxgb-finetune}):
+the encoder is fine-tuned for 30 further epochs at learning rate $10^{-4}$ before its
+embeddings are frozen into the XGBoost features. Is the transferred representation already
+good, or does it need adaptation?
+\item \textbf{sparsest vs densest endpoints}: the hybrid is evaluated on the 4 endpoints
+with the fewest labelled positives and on the 4 densest
+(Table~\ref{tab:hybrid-sparse}) --- the direct test of the stated rationale.
+\item \textbf{hybrid by Tanimoto similarity bin}: each test molecule's maximum Tanimoto
+similarity (Morgan 2048) to the training set is binned into $[0,0.3)$, $[0.3,0.5)$,
+$[0.5,1.0]$, and ROC-AUC is computed per bin over pooled tasks
+(Table~\ref{tab:hybrid-simbins}) --- the direct test of whether the gain comes from the
+hard, dissimilar molecules.
+\end{enumerate}
+
+If the hybrid loses to its parents, that is reported as a negative result together with the
+ablation arms that explain it, in line with what Yang et al.~\cite{yang2019analyzing}
+found for well-tuned fingerprint models.
+
+\section{Technical Validation}
+\label{sec:validation}
+
+\textbf{Seeds and splits.} Every number in this report is a mean over three runs of the
+same protocol: \texttt{scaffold\_det} with seeds 0--2, and the three balanced scaffold
+splits and three random splits with seed $k$ for \texttt{s}$_k$, so each split family has
+three independent runs of every model. Training is deterministic given the seed except for
+hardware-level nondeterminism (Section~\ref{sec:gnn-models}).
+
+\textbf{Wilcoxon signed-rank tests.} A mean difference of 0.003 ROC-AUC can look
+impressive and mean nothing. For each model pair, each endpoint contributes its mean over
+the family's three runs, giving 12 paired observations; the two-sided Wilcoxon signed-rank
+test asks whether one model's per-endpoint advantage is systematic
+(Table~\ref{tab:hybrid-wilcoxon}). The test is exploratory: 12 endpoints and many pairs
+mean no multiplicity correction, so $p$ values near 0.05 are read as suggestions, not
+findings.
+
+\textbf{Calibration.} Probabilities are what a triaging pipeline consumes, so they are
+checked against the observed positive rates: reliability diagrams per model, the expected
+calibration error over 10 equal-width bins, and the Brier score, pooled over all labelled
+(task, molecule) pairs of each model's test runs (Table~\ref{tab:hybrid-calibration}).
+Heavy positive-class weighting is expected to trade calibration for ranking quality; the
+table says how much.
+
+\textbf{What validation does not cover.} The scorer is masked but the datasets are not:
+assay noise, the 17\% missing labels, and the non-random missingness described in the
+Phase 1 report are shared by every model, so none of these tests can detect a bias that
+affects all of them equally.

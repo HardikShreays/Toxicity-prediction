@@ -31,3 +31,5 @@ HEADLINE = RESULTS / "headline.csv"
 SPLIT_NAMES = ["scaffold_det"] + [f"scaffold_s{s}" for s in SEEDS] + [f"random_s{s}" for s in SEEDS]
 ABLATIONS = RESULTS / "ablations"
 ABLATION_SUMMARY = ABLATIONS / "summary.csv"
+HYBRID = RESULTS / "hybrid"                         # hybrid run logs / analyses
+VALIDATION = RESULTS / "validation"                 # Wilcoxon / calibration outputs

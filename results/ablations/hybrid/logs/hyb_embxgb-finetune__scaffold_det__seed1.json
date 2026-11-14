@@ -1,0 +1,148 @@
+{
+ "variant": "hyb_embxgb",
+ "tag": "hyb_embxgb-finetune",
+ "split": "scaffold_det",
+ "seed": 1,
+ "config": {
+  "encoder": "mpnn",
+  "fp_hidden": 128,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "batch_size": 64,
+  "max_epochs": 200,
+  "patience": 25,
+  "pos_weight": {
+   "enabled": true,
+   "clip_max": 30
+  },
+  "embxgb": {
+   "fine_tune_epochs": 30,
+   "fine_tune_lr": 0.0001
+  },
+  "stack": {
+   "xgb_parent": "xgb_fpdesc",
+   "gnn_parent": "mpnn"
+  },
+  "use_fp": true,
+  "use_graph": true
+ },
+ "encoder_config": {
+  "hidden": 256,
+  "n_layers": 4,
+  "pooling": "meanmax",
+  "dropout": 0.1,
+  "use_bond_features": true,
+  "lr": 0.001,
+  "weight_decay": 1e-05,
+  "batch_size": 64,
+  "max_epochs": 200,
+  "patience": 25,
+  "pos_weight": {
+   "enabled": true,
+   "clip_max": 30
+  }
+ },
+ "fine_tuned": true,
+ "fine_tune": {
+  "best_epoch": 0,
+  "epochs_run": 30
+ },
+ "tasks": {
+  "NR-AR": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.4474,
+   "val_has_both_classes": true,
+   "best_iteration": 58
+  },
+  "NR-AR-LBD": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.4663,
+   "val_has_both_classes": true,
+   "best_iteration": 153
+  },
+  "NR-AhR": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.6178,
+   "val_has_both_classes": true,
+   "best_iteration": 399
+  },
+  "NR-Aromatase": {
+   "params": {
+    "max_depth": 4
+   },
+   "val_pr_auc": 0.3844,
+   "val_has_both_classes": true,
+   "best_iteration": 93
+  },
+  "NR-ER": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.3503,
+   "val_has_both_classes": true,
+   "best_iteration": 38
+  },
+  "NR-ER-LBD": {
+   "params": {
+    "max_depth": 4
+   },
+   "val_pr_auc": 0.4072,
+   "val_has_both_classes": true,
+   "best_iteration": 27
+  },
+  "NR-PPAR-gamma": {
+   "params": {
+    "max_depth": 4
+   },
+   "val_pr_auc": 0.1926,
+   "val_has_both_classes": true,
+   "best_iteration": 16
+  },
+  "SR-ARE": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.4906,
+   "val_has_both_classes": true,
+   "best_iteration": 42
+  },
+  "SR-ATAD5": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.2342,
+   "val_has_both_classes": true,
+   "best_iteration": 37
+  },
+  "SR-HSE": {
+   "params": {
+    "max_depth": 4
+   },
+   "val_pr_auc": 0.3603,
+   "val_has_both_classes": true,
+   "best_iteration": 165
+  },
+  "SR-MMP": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.5411,
+   "val_has_both_classes": true,
+   "best_iteration": 350
+  },
+  "SR-p53": {
+   "params": {
+    "max_depth": 6
+   },
+   "val_pr_auc": 0.4286,
+   "val_has_both_classes": true,
+   "best_iteration": 123
+  }
+ }
+}

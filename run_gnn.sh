@@ -36,7 +36,7 @@ say "stage1: OK (36/36)"
 
 say "stage2: frozen-config grid (27 runs)"
 "$PY" -W ignore -m tox.train_gnn --grid > results/gnn/stage2.log 2>&1 || fail "grid crashed (see results/gnn/stage2.log)"
-n=$(ls results/preds | grep -cE "^(gcn|mpnn|afp)__"); [ "$n" = 27 ] || fail "expected 27 GNN prediction files, found $n"
+n=$(ls results/preds | grep -cE "^(gcn|mpnn|afp)__"); [ "$n" -eq 27 ] || fail "expected 27 GNN prediction files, found $n"
 "$PY" -W ignore -m tox.train_gnn --score >> results/gnn/stage2.log 2>&1 || fail "test scoring crashed"
 "$PY" -W ignore -c "
 from tox.train_gnn import score_preds
@@ -56,6 +56,6 @@ print(len(a), len(b), "ablation C4 files (test, val)")
 summarize("mpnn").to_csv(OUT / "summary.csv", index=False)
 per_task_summary("mpnn").to_csv(OUT / "per_task.csv", index=False)
 P
-n=$(ls results/ablations/gnn/preds | wc -l); [ "$n" = 27 ] || fail "expected 27 ablation prediction files, found $n"
+n=$(ls results/ablations/gnn/preds | wc -l | tr -d ' '); [ "$n" -eq 27 ] || fail "expected 27 ablation prediction files, found $n"
 say "stage3: OK (27 ablation runs scored, summary written)"
 date -u +%FT%TZ > results/gnn/PIPELINE_DONE

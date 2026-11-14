@@ -1,0 +1,64 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{cite}
+\usepackage{url}
+\graphicspath{{../../results/figures/}}
+
+\begin{document}
+
+\title{Molecular Toxicity Prediction on Tox21:\\Graph Neural Networks, Hybrid Models and Scaffold Generalization}
+
+\author{\IEEEauthorblockN{Hardik Shreyas, Saman, Arjun, Bhavya, Priyansh}
+\IEEEauthorblockA{Phase 2 report (DL + hybrid)}}
+
+\maketitle
+
+\begin{abstract}
+Phase 2 adds three graph neural networks (GCN, MPNN, AttentiveFP) and three hybrid
+combinations of the best classical and graph models to the Phase 1 pipeline, on exactly the
+same seven splits, fingerprints and masked scorer. The GNNs are trained with a masked
+multi-task loss (missing labels contribute neither loss nor gradient), tuned on validation
+PR-AUC only, and ablated over five architecture factors. The hybrids combine the frozen MPNN
+encoder with the Morgan fingerprint three ways --- frozen embeddings into XGBoost,
+probability stacking, and an end-to-end fusion network --- and are ablated against both
+parents. The graph models close most of the scaffold-generalization gap but do not overtake
+the best fingerprint model (random forest on fingerprints plus descriptors): on the
+randomized scaffold splits the best GNN reaches 0.828 mean test ROC-AUC against 0.839
+($p=0.02$, paired Wilcoxon over 12 endpoint means). Probability stacking is statistically
+indistinguishable from the fingerprint model ($p=0.47$) and beats both of its parents; the
+end-to-end fusion underfits and is reported as a negative result with ablations that locate
+the cause. Calibration and seed-repeat analysis complete the technical validation.
+\end{abstract}
+
+\section{Introduction}
+Phase 1 established the classical baseline: on the deterministic scaffold split, the best
+fingerprint model reaches a mean test ROC-AUC of 0.782, and every model loses 0.08--0.11
+ROC-AUC when moving from random to scaffold splits. Phase 2 asks the two questions the
+plan poses. First, do graph neural networks --- which read the molecule as a graph instead
+of a fixed fingerprint --- generalize better to unseen scaffolds? Second, do the two model
+families make different enough mistakes that combining them helps, especially on the
+sparse endpoints and the dissimilar test molecules?
+
+This report assembles the Phase 2 sections written by the team: the DL literature review
+(Section~\ref{sec:related-gnn}), the architecture logic (Section~\ref{sec:gnn-arch}), the
+DL models and their training protocol (Section~\ref{sec:gnn-models}), the hybrid models and
+their ablations (Section~\ref{sec:hybrid}), and the technical validation
+(Section~\ref{sec:validation}). Everything shares the Phase 1 data contracts: the same
+cleaned dataset, the same seven split files, the same Morgan fingerprints, and a single
+masked scorer, so a number here is directly comparable to the same number in Phase 1.
+
+\input{related_work_gnn}
+\input{gnn_architecture}
+\input{gnn_models}
+\input{hybrid}
+\input{gnn_results_tables}
+\input{validation}
+\input{limitations}
+\input{conclusion}
+
+\bibliographystyle{IEEEtran}
+\bibliography{references_gnn}
+
+\end{document}
