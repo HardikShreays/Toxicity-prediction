@@ -12,8 +12,9 @@ Python 3.11.
 ```bash
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-pytest                      # 29 tests: metrics, splits, featurization, xgb importance
-                            # (the 7 real-split checks skip until tox.data has built the parquet)
+pytest                      # 182 tests: metrics, splits, featurization, xgb importance, GNNs,
+                            # hybrids, validation (the real-split checks skip until tox.data has
+                            # built the parquet)
 ```
 
 ## Reproduce everything
