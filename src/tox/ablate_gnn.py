@@ -14,6 +14,13 @@ The five ablations and the file tokens they write (baseline = the main run `{mod
     single    {model}-single       12 separate single-output models, one per endpoint, instead of
                                    one 12-output model (does label sharing help sparse endpoints?)
 
+One more group belongs to the DL regularization rubric line rather than to B5, and runs the same
+way (plan S7, Saman's augmentation study; gcn only, as the plan specifies):
+    augment   {model}-augmask      random atom masking 10%   (training batches only)
+              {model}-augdrop      random bond dropping 10%  (training batches only)
+              baseline = the un-augmented `gcn` run. Summarised into augmentation.csv rather than
+              summary.csv, so the B5 architecture table stays a separate artifact.
+
 Everything else comes from the model's FROZEN tuned config (results/gnn_params.json), so
 `tune_gnn` must have run first. Files go to results/ablations/gnn/{preds,logs,figures}: a
 sub-folder, because tox.ablate_fp's summary reads every CSV in results/ablations/metrics/.
@@ -42,7 +49,7 @@ from tox.train_gnn import (fit, frozen_config, load_split_graphs, make_pos_weigh
 
 OUT = ABLATIONS / "gnn"
 SPLIT = "scaffold_det"
-GROUPS = ("layers", "bond", "pooling", "posweight", "single")
+GROUPS = ("layers", "bond", "pooling", "posweight", "single", "augment")
 ARCH_KEYS = ("hidden", "n_layers", "pooling", "dropout", "use_bond_features")
 
 
@@ -50,7 +57,8 @@ def variants(model: str, groups=None) -> dict:
     """tag -> config overrides, for the requested groups (default: every group that applies)."""
     model = canonical_name(model)
     applicable = {"layers": True, "bond": model in ("mpnn", "afp"),
-                  "pooling": model in ("gcn", "mpnn"), "posweight": True, "single": True}
+                  "pooling": model in ("gcn", "mpnn"), "posweight": True, "single": True,
+                  "augment": model == "gcn"}
     if groups is None:
         groups = [g for g in GROUPS if applicable[g]]
     out = {}
@@ -68,6 +76,9 @@ def variants(model: str, groups=None) -> dict:
             out.update({f"{model}-pmean": {"pooling": "mean"}, f"{model}-pmax": {"pooling": "max"}})
         elif g == "posweight":
             out[f"{model}-nopw"] = {"pos_weight": {"enabled": False, "clip_max": 30}}
+        elif g == "augment":
+            out.update({f"{model}-augmask": {"augment": "atom_mask"},
+                        f"{model}-augdrop": {"augment": "bond_drop"}})
         else:
             out[f"{model}-single"] = {"single_task": True}
     return out
@@ -119,7 +130,8 @@ def run_ablations(model: str, groups=None, seeds=SEEDS, force: bool = False, out
     if max_epochs is not None:
         base["max_epochs"] = max_epochs
     todo = variants(model, groups)
-    graphs = graphs or load_split_graphs(SPLIT)
+    # `is None`, not `or`: an explicitly passed empty mapping must not silently re-read C1
+    graphs = load_split_graphs(SPLIT) if graphs is None else graphs
     done = []
     for tag, overrides in todo.items():
         for seed in seeds:
@@ -138,7 +150,8 @@ def run_ablations(model: str, groups=None, seeds=SEEDS, force: bool = False, out
 
 
 SUFFIX_GROUPS = [(r"-l\d+$", "layers"), (r"-noedge$", "bond"), (r"-p(mean|max)$", "pooling"),
-                 (r"-nopw$", "posweight"), (r"-single$", "single")]
+                 (r"-nopw$", "posweight"), (r"-single$", "single"),
+                 (r"-aug(mask|drop)$", "augment")]
 
 
 def group_of(tag: str, model: str) -> str:

@@ -1,15 +1,16 @@
 import numpy as np
 import pandas as pd
 import pytest
-pytest.importorskip("torch", reason="GNN tests need torch (not in requirements.txt)")
-pytest.importorskip("torch_geometric", reason="GNN tests need torch_geometric (not in requirements.txt)")
+pytest.importorskip("torch", reason="GNN tests need torch")
+pytest.importorskip("torch_geometric", reason="GNN tests need torch_geometric")
 import torch
 
 from tox.constants import TASKS
 from tox.featurize_graph import build_graphs
 from tox.metrics import score
 from tox.models_gnn import build_model
-from tox.train_gnn import (compute_pos_weight, export_predictions, fit, labels_of,
+from tox.train_gnn import (augment_batch, compute_pos_weight, export_predictions, fit, labels_of,
+                           set_seed,
                            load_config, plot_curves, predict_probs, run, val_scores)
 
 SMILES = ["CCO", "CCN", "CCC", "CCCl", "CCBr", "c1ccccc1", "c1ccccc1O", "c1ccccc1N", "CC(=O)O",
@@ -328,3 +329,93 @@ def test_score_preds_matches_shared_scorer_and_only_touches_gnn_tokens(tmp_path)
     assert list(got.columns) == ["task", "n", "n_pos", "pos_rate", "roc_auc", "pr_auc"]
     score_preds(pdir, tmp_path / "v", role="val", tokens=["gcn"])
     assert (tmp_path / "v" / "gcn__scaffold_det__seed0.csv").exists()
+
+
+# --- S7 augmentation (atom masking / bond dropping), used by the DL regularization study -------
+
+def _one_batch(graphs):
+    from torch_geometric.loader import DataLoader
+    return next(iter(DataLoader(graphs["train"], batch_size=len(graphs["train"]))))
+
+
+@pytest.mark.parametrize("mode", [None, "none"])
+def test_augment_none_is_a_no_op(graphs, mode):
+    b = _one_batch(graphs)
+    before_x, before_e = b.x.clone(), b.edge_index.clone()
+    out = augment_batch(b, mode)
+    assert torch.equal(out.x, before_x) and torch.equal(out.edge_index, before_e)
+
+
+def test_atom_mask_zeroes_rows_without_touching_the_structure(graphs):
+    b = _one_batch(graphs)
+    n_atoms, edges = b.x.size(0), b.edge_index.clone()
+    torch.manual_seed(0)
+    out = augment_batch(b, "atom_mask", rate=0.5)
+    assert out.x.shape == (n_atoms, b.x.size(1))          # nodes are kept, only blanked
+    assert torch.equal(out.edge_index, edges)             # bonds and batch vector untouched
+    zeroed = int((out.x.abs().sum(1) == 0).sum())
+    assert 0 < zeroed < n_atoms                           # some masked, not all
+
+
+def test_atom_mask_rate_zero_and_one_are_the_extremes(graphs):
+    b = _one_batch(graphs)
+    assert int((augment_batch(b.clone(), "atom_mask", rate=0.0).x.abs().sum(1) == 0).sum()) == 0
+    assert int((augment_batch(b.clone(), "atom_mask", rate=1.0).x.abs().sum(1) != 0).sum()) == 0
+
+
+def test_bond_drop_keeps_the_graph_undirected_and_aligned(graphs):
+    b = _one_batch(graphs)
+    n_edges, atoms = b.edge_index.size(1), b.x.clone()
+    torch.manual_seed(0)
+    out = augment_batch(b, "bond_drop", rate=0.5)
+    assert out.edge_index.size(1) < n_edges and out.edge_index.size(1) % 2 == 0
+    assert out.edge_attr.size(0) == out.edge_index.size(1)      # features stay row-aligned
+    assert torch.equal(out.x, atoms)                           # atoms are not removed
+    pairs = set(map(tuple, out.edge_index.t().tolist()))
+    assert all((j, i) in pairs for i, j in pairs)              # both directions dropped together
+
+
+def test_bond_drop_rate_one_leaves_an_edgeless_graph(graphs):
+    out = augment_batch(_one_batch(graphs), "bond_drop", rate=1.0)
+    assert out.edge_index.size(1) == 0 and out.edge_attr.size(0) == 0
+
+
+def test_unknown_augmentation_is_refused():
+    with pytest.raises(ValueError, match="unknown augmentation"):
+        augment_batch(None, "rotate")
+
+
+def test_augmentation_does_not_mutate_the_underlying_dataset(graphs):
+    """Batches are collated copies; masking a batch must not corrode the dataset across epochs."""
+    before = [g.x.clone() for g in graphs["train"]]
+    edges_before = [g.edge_index.clone() for g in graphs["train"]]
+    for mode in ("atom_mask", "bond_drop"):
+        torch.manual_seed(0)
+        augment_batch(_one_batch(graphs), mode, rate=0.9)
+    assert all(torch.equal(g.x, x) for g, x in zip(graphs["train"], before))
+    assert all(torch.equal(g.edge_index, e) for g, e in zip(graphs["train"], edges_before))
+
+
+def test_training_with_augmentation_runs_and_leaves_validation_untouched(graphs):
+    """The augmented run must train, and must never perturb the validation graphs."""
+    val_x = [g.x.clone() for g in graphs["val"]]
+    cfg = load_config({"max_epochs": 2, "patience": 2, "augment": "atom_mask"})
+    model = build_model("gcn", n_tasks=len(TASKS), hidden=16, n_layers=2,
+                        pooling=cfg["pooling"], dropout=cfg["dropout"],
+                        use_bond_features=cfg["use_bond_features"])
+    info = fit(model, graphs["train"], graphs["val"], cfg, seed=0)
+    assert np.isfinite(info["history"][0]["train_loss"])
+    assert all(torch.equal(g.x, x) for g, x in zip(graphs["val"], val_x))
+
+
+def test_augmented_runs_are_reproducible_from_the_seed(graphs):
+    cfg = load_config({"max_epochs": 2, "patience": 2, "augment": "bond_drop"})
+    losses = []
+    for _ in range(2):
+        set_seed(0)                    # run() seeds before building the model
+        model = build_model("gcn", n_tasks=len(TASKS), hidden=16, n_layers=2,
+                            pooling=cfg["pooling"], dropout=cfg["dropout"],
+                            use_bond_features=cfg["use_bond_features"])
+        losses.append([h["train_loss"] for h in fit(model, graphs["train"], graphs["val"],
+                                                    cfg, seed=0)["history"]])
+    assert losses[0] == losses[1]

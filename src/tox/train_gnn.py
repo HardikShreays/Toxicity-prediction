@@ -142,6 +142,42 @@ def _set_rng_state(st: dict) -> None:
     random.setstate(st["python"])
 
 
+AUG_RATE = 0.10          # plan S7: random atom masking 10%, random bond dropping 10%
+
+
+def augment_batch(batch, mode: str | None, rate: float = AUG_RATE):
+    """Graph augmentation for the DL regularization study (plan S7). Modifies `batch` in place.
+
+    atom_mask   zero the whole feature vector of a fraction `rate` of the atoms. The node and
+                every bond it carries stay in the graph, so the structure, the batch vector and
+                the pooling denominators are untouched; only the atom's identity is hidden, and
+                the model has to infer it from its neighbourhood.
+    bond_drop   delete a fraction `rate` of the bonds together with their features. Both
+                directions of a bond are removed together - `featurize_graph` writes them at
+                adjacent positions (2k, 2k+1) and PyG batching concatenates, so the pairing
+                survives batching - which keeps the graph undirected, as the message passing
+                assumes.
+
+    Applied to TRAINING batches only; val and test are never augmented, so early stopping and
+    the reported metrics still describe the unperturbed molecules. Randomness is drawn from the
+    global torch RNG, which `fit` checkpoints every epoch, so a resumed run replays the same
+    augmentations and the run stays reproducible from (seed, epoch).
+    """
+    if mode in (None, "none"):
+        return batch
+    if mode == "atom_mask":
+        keep = (torch.rand(batch.x.size(0)) >= rate).to(batch.x.dtype)
+        batch.x = batch.x * keep.unsqueeze(1)
+    elif mode == "bond_drop":
+        n_bonds = batch.edge_index.size(1) // 2          # both directions adjacent, same features
+        keep_edge = (torch.rand(n_bonds) >= rate).repeat_interleave(2)
+        batch.edge_index = batch.edge_index[:, keep_edge]
+        batch.edge_attr = batch.edge_attr[keep_edge]
+    else:
+        raise ValueError(f"unknown augmentation {mode!r}; choose 'atom_mask', 'bond_drop' or 'none'")
+    return batch
+
+
 def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None,
         ckpt_dir=None, task: int | None = None) -> dict:
     """Train with early stopping on validation mean ROC-AUC; restores the best-epoch weights.
@@ -180,6 +216,7 @@ def fit(model, train_graphs, val_graphs, cfg: dict, seed: int, pos_weight=None,
                             drop_last=len(train_graphs) > cfg["batch_size"])
         losses = []
         for b in loader:
+            b = augment_batch(b, cfg.get("augment", "none"))   # training batches only (plan S7)
             opt.zero_grad()
             if task is None:
                 loss = masked_bce(model(b), b.y, pos_weight)

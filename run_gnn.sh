@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# GNN stages (B4/B5): tuning -> frozen-config grid -> scoring -> ablations -> summary.
+# GNN stages (B4/B5/S7): tuning -> frozen-config grid -> scoring -> mpnn ablations -> summary
+# -> GCN augmentation study (the DL regularization rubric line).
 # Idempotent and resumable: tune_gnn skips saved configs, the grid and ablations skip existing C3 files.
 # Kept separate from run_all.sh (shared file); it only writes GNN outputs (results/gnn*, results/ablations/gnn).
 # usage: PY=/path/to/python ./run_gnn.sh      (PY defaults to .venv/bin/python, then python3)
@@ -56,6 +57,22 @@ print(len(a), len(b), "ablation C4 files (test, val)")
 summarize("mpnn").to_csv(OUT / "summary.csv", index=False)
 per_task_summary("mpnn").to_csv(OUT / "per_task.csv", index=False)
 P
-n=$(ls results/ablations/gnn/preds | wc -l | tr -d ' '); [ "$n" -eq 27 ] || fail "expected 27 ablation prediction files, found $n"
+n=$(ls results/ablations/gnn/preds | grep -c "^mpnn-"); [ "$n" -eq 27 ] || fail "expected 27 mpnn ablation prediction files, found $n"
 say "stage3: OK (27 ablation runs scored, summary written)"
+
+say "stage4: GCN augmentation study (6 runs)"
+"$PY" -W ignore -m tox.ablate_gnn --model gcn --groups augment > results/gnn/stage4.log 2>&1 || fail "augmentation study crashed (see results/gnn/stage4.log)"
+"$PY" -W ignore - >> results/gnn/stage4.log 2>&1 <<'P' || fail "augmentation scoring/summary crashed"
+from tox.ablate_gnn import OUT, variants, summarize, per_task_summary
+from tox.train_gnn import score_preds
+tok = set(variants("gcn", ["augment"]))
+a = score_preds(OUT / "preds", OUT / "metrics", "test", tok)
+b = score_preds(OUT / "preds", OUT / "val_metrics", "val", tok)
+print(len(a), len(b), "augmentation C4 files (test, val)")
+# own files: the B5 architecture table (summary.csv) stays a separate artifact
+summarize("gcn").to_csv(OUT / "augmentation.csv", index=False)
+per_task_summary("gcn").to_csv(OUT / "augmentation_per_task.csv", index=False)
+P
+n=$(ls results/ablations/gnn/preds | grep -c "^gcn-aug"); [ "$n" -eq 6 ] || fail "expected 6 augmentation prediction files, found $n"
+say "stage4: OK (6 augmentation runs scored, augmentation.csv written)"
 date -u +%FT%TZ > results/gnn/PIPELINE_DONE
