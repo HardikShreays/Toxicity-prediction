@@ -1,0 +1,11 @@
+model,split,seed,task,kind,smiles,y,prob,n_atoms,top_atoms
+mpnn,scaffold_det,0,SR-MMP,tp,CC1=C(/C=C/C(C)=C/C=C\C(C)=C\C(=O)Nc2ccc(O)cc2)C(C)(C)CCC1,1,0.9971480965614319,29,19:C:0.700;1:C:0.696;5:C:0.664
+mpnn,scaffold_det,0,SR-MMP,tp,c1ccc2c(c1)c1cccc3ccc4cccc2c4c31,1,0.9902569055557251,20,3:C:0.640;4:C:0.639;13:C:0.624
+mpnn,scaffold_det,0,SR-MMP,tp,Cc1cc(C(C#N)c2ccc(Cl)cc2)c(Cl)cc1NC(=O)c1cc(I)cc(I)c1O,1,0.9898354411125183,30,7:C:0.693;10:C:0.676;1:C:0.659
+mpnn,scaffold_det,0,SR-MMP,tp,CC(C)(c1ccccc1)c1ccc(O)c(C(C)(C)c2ccccc2)c1,1,0.987738847732544,25,3:C:0.655;1:C:0.638;9:C:0.625
+mpnn,scaffold_det,0,SR-MMP,tp,Cc1ccc2cc3c(ccc4ccccc43)c3c2c1CC3,1,0.9854082465171814,21,4:C:0.652;10:C:0.645;1:C:0.640
+mpnn,scaffold_det,0,SR-MMP,fp,COc1cc(/C=C/C(=O)O[C@H]2CC[C@]34C[C@]35CC[C@]3(C)[C@@H]([C@H](C)CCC=C(C)C)CC[C@@]3(C)[C@@H]5CC[C@H]4C2(C)C)ccc1O,0,0.989657461643219,44,15:C:0.719;18:C:0.714;26:C:0.709
+mpnn,scaffold_det,0,SR-MMP,fp,O=C(O[C@@H]1Cc2c(O)cc(O)cc2O[C@@H]1c1cc(O)c(O)c(O)c1)c1cc(O)c(O)c(O)c1,0,0.9887570738792419,33,29:O:0.873;28:C:0.678;27:O:0.618
+mpnn,scaffold_det,0,SR-MMP,fp,c1ccc2c(c1)ccc1c3ccccc3ccc21,0,0.9775820374488831,18,14:C:0.690;9:C:0.689;3:C:0.669
+mpnn,scaffold_det,0,SR-MMP,fp,C/C=C(/CC[C@@H](C)[C@H]1CC[C@H]2C3=CC[C@H]4[C@H](C)[C@@H](O)CC[C@]4(C)[C@H]3CC[C@]12C)C(C)C,0,0.9654178023338318,31,28:C:0.717;2:C:0.701;15:C:0.700
+mpnn,scaffold_det,0,SR-MMP,fp,O=c1oc2c(O)c(O)cc3c(=O)oc4c(O)c(O)cc1c4c23,0,0.9582061171531677,22,9:C:0.618;3:C:0.607;21:C:0.592
