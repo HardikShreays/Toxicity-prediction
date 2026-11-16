@@ -77,6 +77,12 @@ profiles, not from a special affinity of hybrids for unseen scaffolds.
 
 \input{hybrid_results_tables}
 
+Aggregate scores can hide endpoint-specific differences. Table~\ref{tab:hybrid-endpoint}
+therefore reports per-endpoint ROC-AUC and PR-AUC for the fingerprint-plus-descriptor
+baseline, the strongest GNN, and the stacking hybrid on the balanced scaffold split family.
+No one model is best on every endpoint, and PR-AUC is interpreted relative to each
+endpoint's prevalence.
+
 \subsection{Ablations}
 \label{sec:hybrid-ablation}
 Five ablations ask what each part contributes (plan p.~19); all run on
@@ -105,32 +111,3 @@ hard, dissimilar molecules.
 If the hybrid loses to its parents, that is reported as a negative result together with the
 ablation arms that explain it, in line with what Yang et al.~\cite{yang2019analyzing}
 found for well-tuned fingerprint models.
-
-\section{Technical Validation}
-\label{sec:validation}
-
-\textbf{Seeds and splits.} Every number in this report is a mean over three runs of the
-same protocol: \texttt{scaffold\_det} with seeds 0--2, and the three balanced scaffold
-splits and three random splits with seed $k$ for \texttt{s}$_k$, so each split family has
-three independent runs of every model. Training is deterministic given the seed except for
-hardware-level nondeterminism (Section~\ref{sec:gnn-models}).
-
-\textbf{Wilcoxon signed-rank tests.} A mean difference of 0.003 ROC-AUC can look
-impressive and mean nothing. For each model pair, each endpoint contributes its mean over
-the family's three runs, giving 12 paired observations; the two-sided Wilcoxon signed-rank
-test asks whether one model's per-endpoint advantage is systematic
-(Table~\ref{tab:hybrid-wilcoxon}). The test is exploratory: 12 endpoints and many pairs
-mean no multiplicity correction, so $p$ values near 0.05 are read as suggestions, not
-findings.
-
-\textbf{Calibration.} Probabilities are what a triaging pipeline consumes, so they are
-checked against the observed positive rates: reliability diagrams per model, the expected
-calibration error over 10 equal-width bins, and the Brier score, pooled over all labelled
-(task, molecule) pairs of each model's test runs (Table~\ref{tab:hybrid-calibration}).
-Heavy positive-class weighting is expected to trade calibration for ranking quality; the
-table says how much.
-
-\textbf{What validation does not cover.} The scorer is masked but the datasets are not:
-assay noise, the 17\% missing labels, and the non-random missingness described in the
-Phase 1 report are shared by every model, so none of these tests can detect a bias that
-affects all of them equally.

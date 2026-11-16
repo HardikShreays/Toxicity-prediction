@@ -9,18 +9,19 @@ Written during the pre-submission audit (Phase 1 only). Nothing here was invente
   structures). Neither the report, the slides, the notebooks nor any remote branch contains one. At the time of
   the audit every teammate branch was already merged into `main` and there were no open pull requests or
   issues for it. Not produced here: it is Priyansh's deliverable and would need his choice of model and examples.
-- **Unit tests for cleaning and dedup (Saman).** `tests/test_data.py` is a 0-byte file on `main`
-  (commit a966885, message "S3: tests for standardize, dedup rules and the C1 contract"). No test imports
-  `tox.data`. The cleaned data, dedup rules and C1 contract were checked independently during the audit
-  (columns, canonical unique SMILES, scaffolds, dedup counts, split coverage), but no committed test
-  guards them.
+## Resolved since the audit
 
-## Report build
-
-- `report/phase1/main.pdf` was built before two small corrections to `main.tex` (the heavy-atom wording
-  "100 or more", and NR-ER ROC-AUC 0.693 instead of 0.692). No LaTeX toolchain was available on the audit
-  machine, so the PDF was not rebuilt: **recompile on Overleaf before submitting** so PDF and source agree.
-  The committed PDF was otherwise checked against its source: same title, sections and numbers.
+- ~~**Unit tests for cleaning and dedup (Saman).**~~ `tests/test_data.py` now holds 21 tests covering
+  `standardize` (canonicalisation, largest-fragment salt stripping, `None` on unparseable input, charges
+  and stereochemistry preserved), `scaffold`, the three dedup rules, and the C1 contract on the committed
+  parquet. Two behaviours were pinned down while writing them and are worth knowing: stripping a salt does
+  **not** neutralize what is left, so the sodium salt and the free acid stay different molecules and are
+  not merged by dedup; and an empty SMILES survives `standardize` (RDKit parses `""` into an empty
+  molecule) and then makes `scaffold` raise. Tox21 contains no such row, so the pipeline is unaffected,
+  and a test asserts that.
+- ~~**Report build.**~~ `report/phase1/main.pdf` has been rebuilt from `main.tex` with `tectonic`, so the
+  PDF and its source now agree (this was the "recompile on Overleaf before submitting" item: the two
+  corrections it was missing, the heavy-atom wording and NR-ER 0.693, are now in the PDF).
 
 ## Not verified
 

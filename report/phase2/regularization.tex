@@ -1,0 +1,66 @@
+\section{DL dataset and regularization}
+\label{sec:regularization}
+
+\textbf{What regularizes the graph models.} Four mechanisms act at once, all fixed before any
+test label is read: dropout $0.2$ after every message-passing block and inside the head; weight
+decay $10^{-5}$ in Adam; early stopping on validation mean ROC-AUC with patience 25, which caps
+the effective number of epochs (the frozen models stop between epoch 30 and 61, far short of the
+200-epoch budget); and the masked multi-task loss itself, which makes the twelve endpoints share
+one encoder and so acts as the inductive bias that a single sparse endpoint cannot overfit alone.
+Batch normalisation between layers is used for optimisation stability rather than regularization.
+
+\textbf{Augmentation study.} The plan asks whether graph augmentation adds anything on top. We
+compare the frozen GCN against two augmentations applied to \emph{training batches only}, so
+validation and test molecules, early stopping and every reported metric describe unperturbed
+structures:
+
+\begin{itemize}
+  \item \texttt{gcn-augmask} --- \textbf{random atom masking}, 10\%: the feature vector of a
+        randomly chosen 10\% of atoms is zeroed. The atom and its bonds stay in the graph, so the
+        topology, the batch vector and the pooling denominators are unchanged; only the atom's
+        identity is hidden, and the model must infer it from its neighbourhood.
+  \item \texttt{gcn-augdrop} --- \textbf{random bond dropping}, 10\%: 10\% of bonds are deleted
+        with their features. Both directions of a bond are removed together, so the graph stays
+        undirected as the message passing assumes.
+\end{itemize}
+
+Both are re-sampled every epoch, drawn from the checkpointed RNG so a resumed run replays the
+same augmentations. Everything else --- architecture, frozen hyper-parameters, loss, optimiser,
+early stopping, seeds --- is identical to the baseline, which is the un-augmented \texttt{gcn}
+run of Table~\ref{tab:gnn-main}; the three arms therefore differ in exactly one factor.
+
+\begin{table}[t]
+\centering
+\caption{Graph augmentation on \texttt{scaffold\_det}: test ROC-AUC and PR-AUC, 12-endpoint
+mean, mean $\pm$ std over seeds 0--2. The baseline is the un-augmented GCN. The mean test
+positive rate is 0.103, which is the PR-AUC of a random classifier.}
+\label{tab:augmentation}
+\begin{tabular}{lcc}
+\hline
+Arm & ROC-AUC & PR-AUC \\
+\hline
+\texttt{gcn} (no augmentation) & $0.752 \pm 0.008$ & $0.354 \pm 0.004$ \\
+\texttt{gcn-augmask} (atom masking 10\%) & $0.749 \pm 0.005$ & $0.358 \pm 0.005$ \\
+\texttt{gcn-augdrop} (bond dropping 10\%) & $0.753 \pm 0.005$ & $0.340 \pm 0.022$ \\
+\hline
+\end{tabular}
+\end{table}
+
+\textbf{Result: neither augmentation helps.} Every difference in Table~\ref{tab:augmentation} is
+smaller than the seed-to-seed spread it sits next to. Atom masking costs $0.003$ ROC-AUC and
+gains $0.004$ PR-AUC; bond dropping gains $0.001$ ROC-AUC and loses $0.014$ PR-AUC, with a
+PR-AUC standard deviation ($0.022$) five times the baseline's, i.e.\ it mostly adds variance.
+With three seeds and differences this small we claim no ordering between the three arms: the
+honest reading is that 10\% augmentation neither helps nor hurts this model on this split.
+
+That is a coherent result rather than a disappointing one. The GCN is already stopped early
+(epoch 30--61 of 200) by a validation signal computed on 12 endpoints at once, and its capacity
+is modest; the evidence that it is not over-fitting is the MPNN ablation grid in
+Table~\ref{tab:gnn-ablation}, where every arm but one --- including the deliberately weakened
+ones, such as bond features removed or positive weights switched off --- scores at or above the
+frozen baseline (the exception is the 5-layer arm, $0.731$ against $0.732$, a gap far inside its
+own spread). A model that improves when it is weakened is limited by its tuning budget, not by
+excess capacity. Augmentation addresses over-fitting, and over-fitting is not what limits this
+model, so the absence of a gain is what the rest of our evidence predicts. The regularization
+that does matter here is the multi-task masked loss, which is tested directly by the
+multi-task-versus-single-task ablation.

@@ -36,7 +36,11 @@ Stacking message-passing layers makes atom representations of a connected graph 
 \subsection{Masked multi-task loss}
 Tox21 has 12 endpoints and about 17\% of the label matrix is missing, because a compound was not tested in an assay, not because it was negative. Let $m_{ij}\in\{0,1\}$ indicate that label $y_{ij}$ of molecule $i$ and endpoint $j$ is observed, $z_{ij}$ be the logit and $p_{ij}=\sigma(z_{ij})$. Treating the observed labels as independent Bernoulli variables, the negative log-likelihood of the observed entries, with the positive term weighted by $w_j$, is
 \begin{equation}
-\mathcal L=-\frac1{\sum_{i,j}m_{ij}}\sum_{i,j}m_{ij}\Big[w_j\,y_{ij}\log p_{ij}+(1-y_{ij})\log(1-p_{ij})\Big].
+\begin{aligned}
+\mathcal L = -\frac{1}{\sum_{i,j}m_{ij}}\sum_{i,j}m_{ij}\Big[&
+w_j\,y_{ij}\log p_{ij}\\
+&+(1-y_{ij})\log(1-p_{ij})\Big].
+\end{aligned}
 \end{equation}
 Since $\partial\big(-[w y\log\sigma(z)+(1-y)\log(1-\sigma(z))]\big)/\partial z=(1-y)\sigma(z)-w\,y\,(1-\sigma(z))$, the gradient is
 \begin{equation}

@@ -30,8 +30,15 @@ pytest                      # 182 tests: metrics, splits, featurization, models,
 Downloads the data, cleans + dedups it, builds the 7 splits, computes features, trains the whole
 AML grid (6 configs x 12 endpoints x 9 runs) and the fingerprint ablation, scores everything with
 `tox.metrics`, writes `results/summary.csv` + `results/headline.csv`, refreshes the table below and
-re-runs the notebooks. Takes about 1 hour on an 8-core M3 laptop, most of it the random forests.
-`train_aml.py` skips runs whose prediction file already exists, so it can be resumed.
+re-runs the notebooks. It then runs the two Phase 2 pipelines below in order and the
+interpretability step, so a single command reproduces every number in both reports (plan gate P6).
+Phase 1 is about 1 hour on an 8-core M3 laptop, most of it the random forests; the GNN and hybrid
+stages add several hours on CPU. Every stage skips work whose output already exists, so the whole
+thing is resumable.
+
+```bash
+./run_all.sh --phase1      # phase 1 only, if you do not want the GNN / hybrid stages
+```
 
 ### GNN pipeline (Phase 2)
 
@@ -39,13 +46,18 @@ re-runs the notebooks. Takes about 1 hour on an 8-core M3 laptop, most of it the
 PY=/path/to/python ./run_gnn.sh     # PY defaults to .venv/bin/python, then python3
 ```
 
-Run after `run_all.sh` (needs its splits). Three stages: tune GCN / MPNN / AttentiveFP on the
-`scaffold_det` validation set (36 configs), train the frozen-config grid (3 models x 3 splits x 3 seeds
-= 27 runs) and score it, then the MPNN ablations (27 runs). It is resumable and refuses to start if a
-GNN job is already running. Logs are in `results/gnn/pipeline.log`; `PIPELINE_DONE` / `PIPELINE_FAILED`
-mark the outcome. Needs PyTorch + PyTorch Geometric (not in `requirements.txt`; tested with
-torch 2.8 / PyG 2.8 - newer torch wheels crash macOS XGBoost when both run in one process, see
-`conftest.py`).
+Run after `run_all.sh --phase1` (needs its splits), or let plain `run_all.sh` call it for you.
+Four stages: tune GCN / MPNN / AttentiveFP on the `scaffold_det` validation set (36 configs), train
+the frozen-config grid (3 models x 3 splits x 3 seeds = 27 runs) and score it, the MPNN ablations
+(27 runs), then the GCN augmentation study (6 runs: atom masking and bond dropping against the
+un-augmented baseline, written to `results/ablations/gnn/augmentation.csv`). It is resumable and
+refuses to start if a GNN job is already running. Logs are in `results/gnn/pipeline.log`;
+`PIPELINE_DONE` / `PIPELINE_FAILED` mark the outcome.
+
+`torch==2.8.0` and `torch_geometric==2.8.1` are pinned in `requirements.txt`: 2.8.0 is the version
+recorded in the committed run logs, and newer torch wheels crash macOS XGBoost when both run in one
+process (see `conftest.py`). Keep that pin - a clean re-run on it reproduces the committed GNN
+predictions exactly (verified: max probability difference 0.0).
 
 ### Hybrid pipeline (Phase 2)
 
@@ -114,14 +126,15 @@ src/tox/
   models_gnn.py     GCN / MPNN / AttentiveFP
   train_gnn.py      masked-loss training, early stopping, C3 export
   tune_gnn.py       hyper-parameter search on val only
-  ablate_gnn.py     MPNN architecture ablations
+  ablate_gnn.py     MPNN architecture ablations + the GCN augmentation study (S7)
   gnn_report.py     LaTeX tables from saved C4 files (no new metrics)
   hybrid.py         the 3 hybrid variants (fusion module, frozen embeddings, stack)
   train_hybrid.py   hybrid grid + ablations, resumable
   hybrid_analysis.py  sparsest-vs-densest endpoints, Tanimoto-similarity bins
   hybrid_report.py  LaTeX tables for the hybrid / comparison report sections
   validate.py       Wilcoxon signed-rank tests, calibration (ECE, Brier, diagrams)
-  analysis/         importance.py (gain -> substructures, figures), make_slides_phase1.py
+  analysis/         importance.py (gain -> substructures, figures), make_slides_phase1.py,
+                    interpret_gnn.py (per-atom attributions -> similarity maps)
 notebooks/          01_eda, 02_aml
 report/phase1/      IEEEtran LaTeX report, slides.pptx (built by analysis/make_slides_phase1.py)
 report/phase2/      IEEEtran LaTeX report (gnn + hybrid + validation), tables auto-generated

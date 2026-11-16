@@ -18,8 +18,8 @@ __pycache__/
 .DS_Store
 .vscode/
 
-# the plan pdf stays local
-*.pdf
+# the plan pdf stays local; the report PDFs are deliverables and stay tracked
+/Tox21 Molecular Toxicity Prediction*.pdf
 
 # latex build junk
 report/**/*.aux

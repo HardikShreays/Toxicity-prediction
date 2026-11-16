@@ -28,11 +28,37 @@ positive rate (random PR-AUC) & \multicolumn{3}{c}{} & 0.103 & 0.103 & 0.077 \\
 \end{tabular}
 \end{table*}
 
+\begin{table*}[t]
+\centering
+\caption{Endpoint-wise test ROC-AUC and PR-AUC on the balanced scaffold split family (\texttt{scaffold\_s0}--\texttt{scaffold\_s2}). Each value is the mean over the three seeded runs; missing assay labels are excluded. PR-AUC should be compared within each endpoint because prevalence differs.}
+\label{tab:hybrid-endpoint}
+\small
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{ROC-AUC} & \multicolumn{3}{c}{PR-AUC} \\
+endpoint & rf\_fpdesc & afp & hyb\_stack & rf\_fpdesc & afp & hyb\_stack \\
+\midrule
+NR-AR & 0.801 & 0.802 & 0.808 & 0.521 & 0.430 & 0.498 \\
+NR-AR-LBD & 0.878 & 0.881 & 0.898 & 0.559 & 0.483 & 0.569 \\
+NR-AhR & 0.861 & 0.840 & 0.851 & 0.592 & 0.577 & 0.590 \\
+NR-Aromatase & 0.802 & 0.827 & 0.810 & 0.416 & 0.395 & 0.405 \\
+NR-ER & 0.794 & 0.767 & 0.769 & 0.526 & 0.470 & 0.492 \\
+NR-ER-LBD & 0.833 & 0.831 & 0.819 & 0.519 & 0.405 & 0.444 \\
+NR-PPAR-gamma & 0.865 & 0.840 & 0.864 & 0.290 & 0.191 & 0.262 \\
+SR-ARE & 0.803 & 0.798 & 0.811 & 0.523 & 0.520 & 0.543 \\
+SR-ATAD5 & 0.839 & 0.830 & 0.824 & 0.283 & 0.260 & 0.314 \\
+SR-HSE & 0.844 & 0.817 & 0.840 & 0.410 & 0.335 & 0.375 \\
+SR-MMP & 0.900 & 0.887 & 0.908 & 0.699 & 0.647 & 0.707 \\
+SR-p53 & 0.844 & 0.816 & 0.832 & 0.430 & 0.317 & 0.385 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
 \begin{table}[t]
 \centering
 \caption{Hybrid ablations on \texttt{scaffold\_det}: test ROC-AUC and PR-AUC (12-endpoint mean, mean $\pm$ std over seeds). One factor changes per arm; the baseline is the main run of the same variant.}
 \label{tab:hybrid-ablation}
-\small
+\scriptsize
 \begin{tabular}{llccc}
 \toprule
 variant & arm & runs & ROC-AUC & PR-AUC \\
@@ -135,49 +161,13 @@ xgb\_fpdesc & [0.5, 1) & 235 & 0.829 $\pm$ 0.013 \\
 
 \begin{table}[t]
 \centering
-\caption{Wilcoxon signed-rank tests on the randomized scaffold splits (12 paired endpoint means; each endpoint averaged over its 3 runs). $^{*}$/$^{**}$: $p<0.05$ / $p<0.01$. Exploratory: 12 endpoints and many pairs, no multiplicity correction.}
+\caption{Wilcoxon signed-rank tests on the balanced scaffold split family (\texttt{scaffold\_s0}--\texttt{scaffold\_s2}; 12 paired endpoint means, each averaged over its 3 runs). $^{*}$/$^{**}$: $p<0.05$ / $p<0.01$. Exploratory: 12 endpoints and many pairs, no multiplicity correction.}
 \label{tab:hybrid-wilcoxon}
-\small
+\scriptsize
 \begin{tabular}{llccc}
 \toprule
 model $a$ & model $b$ & ROC-AUC $a$ & ROC-AUC $b$ & $p$ \\
 \midrule
-afp & hyb\_embxgb & 0.769 & 0.742 & 0.007$^{**}$ \\
-afp & hyb\_fusion & 0.769 & 0.748 & 0.027$^{*}$ \\
-afp & hyb\_stack & 0.769 & 0.768 & 0.970 \\
-afp & mpnn & 0.769 & 0.732 & 0.000$^{**}$ \\
-afp & rf\_fpdesc & 0.769 & 0.782 & 0.424 \\
-afp & xgb\_fpdesc & 0.769 & 0.761 & 0.470 \\
-gcn & hyb\_embxgb & 0.752 & 0.742 & 0.301 \\
-gcn & hyb\_fusion & 0.752 & 0.748 & 0.910 \\
-gcn & hyb\_stack & 0.752 & 0.768 & 0.064 \\
-gcn & mpnn & 0.752 & 0.732 & 0.016$^{*}$ \\
-gcn & rf\_fpdesc & 0.752 & 0.782 & 0.027$^{*}$ \\
-gcn & xgb\_fpdesc & 0.752 & 0.761 & 0.424 \\
-hyb\_embxgb & hyb\_fusion & 0.742 & 0.748 & 0.519 \\
-hyb\_embxgb & hyb\_stack & 0.742 & 0.768 & 0.002$^{**}$ \\
-hyb\_embxgb & mpnn & 0.742 & 0.732 & 0.042$^{*}$ \\
-hyb\_embxgb & rf\_fpdesc & 0.742 & 0.782 & 0.002$^{**}$ \\
-hyb\_embxgb & xgb\_fpdesc & 0.742 & 0.761 & 0.151 \\
-hyb\_fusion & hyb\_stack & 0.748 & 0.768 & 0.042$^{*}$ \\
-hyb\_fusion & mpnn & 0.748 & 0.732 & 0.012$^{*}$ \\
-hyb\_fusion & rf\_fpdesc & 0.748 & 0.782 & 0.003$^{**}$ \\
-hyb\_fusion & xgb\_fpdesc & 0.748 & 0.761 & 0.470 \\
-hyb\_stack & mpnn & 0.768 & 0.732 & 0.000$^{**}$ \\
-hyb\_stack & rf\_fpdesc & 0.768 & 0.782 & 0.064 \\
-hyb\_stack & xgb\_fpdesc & 0.768 & 0.761 & 0.064 \\
-lr\_fp & mpnn & 0.715 & 0.732 & 0.151 \\
-lr\_fp & rf\_fpdesc & 0.715 & 0.782 & 0.000$^{**}$ \\
-lr\_fp & xgb\_fpdesc & 0.715 & 0.761 & 0.002$^{**}$ \\
-lr\_fpdesc & mpnn & 0.722 & 0.732 & 0.424 \\
-lr\_fpdesc & rf\_fpdesc & 0.722 & 0.782 & 0.001$^{**}$ \\
-lr\_fpdesc & xgb\_fpdesc & 0.722 & 0.761 & 0.016$^{*}$ \\
-mpnn & rf\_fpdesc & 0.732 & 0.782 & 0.001$^{**}$ \\
-mpnn & xgb\_fpdesc & 0.732 & 0.761 & 0.064 \\
-rf\_fp & rf\_fpdesc & 0.732 & 0.782 & 0.005$^{**}$ \\
-rf\_fp & xgb\_fpdesc & 0.732 & 0.761 & 0.151 \\
-rf\_fpdesc & xgb\_fpdesc & 0.782 & 0.761 & 0.012$^{*}$ \\
-xgb\_fp & xgb\_fpdesc & 0.696 & 0.761 & 0.001$^{**}$ \\
 afp & hyb\_embxgb & 0.828 & 0.830 & 0.733 \\
 afp & hyb\_fusion & 0.828 & 0.802 & 0.005$^{**}$ \\
 afp & hyb\_stack & 0.828 & 0.836 & 0.077 \\
@@ -229,42 +219,6 @@ rf\_fp & xgb\_fpdesc & 0.803 & 0.813 & 0.339 \\
 rf\_fpdesc & xgb\_fp & 0.839 & 0.767 & 0.000$^{**}$ \\
 rf\_fpdesc & xgb\_fpdesc & 0.839 & 0.813 & 0.002$^{**}$ \\
 xgb\_fp & xgb\_fpdesc & 0.767 & 0.813 & 0.002$^{**}$ \\
-afp & hyb\_embxgb & 0.844 & 0.843 & 0.970 \\
-afp & hyb\_fusion & 0.844 & 0.833 & 0.027$^{*}$ \\
-afp & hyb\_stack & 0.844 & 0.864 & 0.007$^{**}$ \\
-afp & mpnn & 0.844 & 0.831 & 0.027$^{*}$ \\
-afp & rf\_fpdesc & 0.844 & 0.862 & 0.001$^{**}$ \\
-afp & xgb\_fpdesc & 0.844 & 0.855 & 0.077 \\
-gcn & hyb\_embxgb & 0.842 & 0.843 & 0.622 \\
-gcn & hyb\_fusion & 0.842 & 0.833 & 0.301 \\
-gcn & hyb\_stack & 0.842 & 0.864 & 0.003$^{**}$ \\
-gcn & mpnn & 0.842 & 0.831 & 0.077 \\
-gcn & rf\_fpdesc & 0.842 & 0.862 & 0.016$^{*}$ \\
-gcn & xgb\_fpdesc & 0.842 & 0.855 & 0.052 \\
-hyb\_embxgb & hyb\_fusion & 0.843 & 0.833 & 0.110 \\
-hyb\_embxgb & hyb\_stack & 0.843 & 0.864 & 0.000$^{**}$ \\
-hyb\_embxgb & mpnn & 0.843 & 0.831 & 0.064 \\
-hyb\_embxgb & rf\_fpdesc & 0.843 & 0.862 & 0.027$^{*}$ \\
-hyb\_embxgb & xgb\_fpdesc & 0.843 & 0.855 & 0.052 \\
-hyb\_fusion & hyb\_stack & 0.833 & 0.864 & 0.000$^{**}$ \\
-hyb\_fusion & mpnn & 0.833 & 0.831 & 0.380 \\
-hyb\_fusion & rf\_fpdesc & 0.833 & 0.862 & 0.000$^{**}$ \\
-hyb\_fusion & xgb\_fpdesc & 0.833 & 0.855 & 0.003$^{**}$ \\
-hyb\_stack & mpnn & 0.864 & 0.831 & 0.000$^{**}$ \\
-hyb\_stack & rf\_fpdesc & 0.864 & 0.862 & 0.910 \\
-hyb\_stack & xgb\_fpdesc & 0.864 & 0.855 & 0.233 \\
-lr\_fp & mpnn & 0.801 & 0.831 & 0.000$^{**}$ \\
-lr\_fp & rf\_fpdesc & 0.801 & 0.862 & 0.000$^{**}$ \\
-lr\_fp & xgb\_fpdesc & 0.801 & 0.855 & 0.000$^{**}$ \\
-lr\_fpdesc & mpnn & 0.826 & 0.831 & 0.970 \\
-lr\_fpdesc & rf\_fpdesc & 0.826 & 0.862 & 0.001$^{**}$ \\
-lr\_fpdesc & xgb\_fpdesc & 0.826 & 0.855 & 0.001$^{**}$ \\
-mpnn & rf\_fpdesc & 0.831 & 0.862 & 0.002$^{**}$ \\
-mpnn & xgb\_fpdesc & 0.831 & 0.855 & 0.007$^{**}$ \\
-rf\_fp & rf\_fpdesc & 0.833 & 0.862 & 0.001$^{**}$ \\
-rf\_fp & xgb\_fpdesc & 0.833 & 0.855 & 0.007$^{**}$ \\
-rf\_fpdesc & xgb\_fpdesc & 0.862 & 0.855 & 0.129 \\
-xgb\_fp & xgb\_fpdesc & 0.801 & 0.855 & 0.001$^{**}$ \\
 \bottomrule
 \end{tabular}
 \end{table}

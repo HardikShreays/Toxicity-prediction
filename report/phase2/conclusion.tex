@@ -1,12 +1,16 @@
-% Phase 2 conclusion (Hardik).
 \section{Conclusion}
 \label{sec:conclusion}
-Phase 2 completes the plan's deep-learning track on the shared contracts: three graph
-architectures trained with a masked multi-task loss, five architecture ablations, three
-hybrid combinations of the two model families with five hybrid ablations, and a technical
-validation layer (seeded repeats, paired Wilcoxon tests, calibration) on top of the single
-masked scorer. The final comparison table is generated from the scorer's output files, so
-the numbers in this report and in the repository's README can never drift apart. The
-honest summary --- whether the GNNs and the hybrids beat the tuned fingerprint models on
-unseen scaffolds, and by how much, if at all --- is stated with the tables in the Results
-sections and in the Phase 2 deck.
+This study compared fingerprint-based classical models with GCN, MPNN, AttentiveFP, and
+three hybrid approaches for 12 Tox21 endpoints. All models were evaluated using the same
+splits and masked endpoint-wise metrics. The graph models performed competitively on
+scaffold splits, but the fingerprint-plus-descriptor random forest remained the strongest
+single model. Probability stacking was the most successful hybrid: it improved on its
+parents on the balanced scaffold splits and was not statistically distinguishable from
+the random-forest baseline in the exploratory paired test. End-to-end fusion did not
+provide a benefit under the tested training setup.
+
+The results support a measured conclusion: graph-learned representations are useful
+complements to engineered chemical features, but they do not automatically outperform
+strong fingerprint baselines. Future work should prioritize better-calibrated stacking,
+regularization and tuning for end-to-end fusion, and evaluation on external or prospective
+data.

@@ -1,1 +1,28 @@
-% Validation / limitations / conclusion sections of the Phase 2 report (Hardik).
+\section{Technical Validation}
+\label{sec:validation}
+
+\subsection{Repeated runs and paired comparisons}
+Each reported split family contains three runs: seeds 0--2 for the deterministic scaffold
+split, and one run for each of the three balanced scaffold and random splits. We report
+the mean and sample standard deviation across those runs. For paired comparisons, each
+endpoint contributes its mean score across the three runs, giving 12 paired endpoint
+observations. We use a two-sided Wilcoxon signed-rank test
+(Table~\ref{tab:hybrid-wilcoxon}). These tests are exploratory: many model pairs are
+compared without a multiplicity correction, so $p$ values near 0.05 should be interpreted
+cautiously.
+
+\subsection{Probability calibration}
+Ranking metrics do not measure whether predicted probabilities match observed frequencies.
+We therefore report expected calibration error (ECE), calculated over 10 equal-width
+probability bins, and the Brier score over all labelled (task, molecule) pairs in the test
+runs (Table~\ref{tab:hybrid-calibration}). The fingerprint-plus-descriptor random forest
+has the lowest ECE (0.025) and Brier score (0.061). The stacking model ranks strongly but
+has higher ECE (0.278), illustrating that strong discrimination does not guarantee
+well-calibrated probabilities.
+
+\subsection{Scope of the validation}
+The scorer excludes missing labels, but the dataset retains assay noise and non-random
+missingness. Scaffold splitting is a more demanding generalization test than a random
+split, but it is not prospective or external validation. The statistical comparisons use
+12 endpoints and are exploratory; conclusions should be confirmed on additional data
+before deployment.
